@@ -1,69 +1,94 @@
-import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <main className="min-h-screen bg-[#FFFFFF] flex flex-col">
+      <header className="border-b border-[#E5E5E5] px-6 h-16 flex items-center justify-between max-w-[1120px] w-full mx-auto">
+        <span className="text-[16px] font-semibold tracking-tight text-[#1A1A1A]">
+          EscrowPay
+        </span>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/login"
+            className="h-9 px-4 rounded-full border border-[#E5E5E5] text-[13px] font-medium text-[#1A1A1A] inline-flex items-center hover:bg-[#F4F3EF]"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/signup"
+            className="h-9 px-4 rounded-full bg-[#1A1A1A] text-[13px] font-medium text-[#FFFFFF] inline-flex items-center hover:bg-[#1A1A1A]/90"
+          >
+            Create Store
+          </Link>
+        </div>
+      </header>
+
+      <section className="flex-1 flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-[680px]">
+          <span className="inline-block font-mono text-[11px] uppercase tracking-[0.08em] text-[#8A5A00] bg-[#FFF4D6] border border-[#FFB800]/50 rounded-full px-3 py-1">
+            ESCROW PROTECTED NAIRA LINKS
+          </span>
+          <h1 className="mt-5 text-[36px] sm:text-[44px] font-semibold tracking-[-0.02em] text-[#1A1A1A] leading-[1.12]">
+            Sell on WhatsApp and Instagram without asking buyers to trust blind.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-4 text-[16px] text-[#5F6368] leading-relaxed max-w-[560px]">
+            Create a product link in seconds. Your buyer pays in Naira with zero
+            signup, receives a 6-digit release code, and funds release to you as
+            soon as delivery is confirmed.
           </p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link
+              href="/signup"
+              className="h-12 px-7 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium inline-flex items-center hover:bg-[#1A1A1A]/90"
+            >
+              Create Seller Account →
+            </Link>
+            <Link
+              href="/dashboard"
+              className="h-12 px-7 rounded-full border border-[#E5E5E5] text-[#1A1A1A] text-[14px] font-medium inline-flex items-center hover:bg-[#F4F3EF]"
+            >
+              Go to Dashboard
+            </Link>
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="rounded-2xl bg-[#F8F6F1] p-5">
+              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
+                01 · SHARE LINK
+              </p>
+              <p className="mt-2 text-[14px] font-medium text-[#1A1A1A]">
+                Rich WhatsApp preview
+              </p>
+              <p className="mt-1 text-[13px] text-[#5F6368]">
+                Drop your pay link directly into any DM or status.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-[#F8F6F1] p-5">
+              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
+                02 · BUYER PAYS
+              </p>
+              <p className="mt-2 text-[14px] font-medium text-[#1A1A1A]">
+                Zero-signup checkout
+              </p>
+              <p className="mt-1 text-[13px] text-[#5F6368]">
+                Funds lock inside a timed delivery window with a 6-digit code.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-[#F8F6F1] p-5">
+              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
+                03 · DELIVER & EARN
+              </p>
+              <p className="mt-2 text-[14px] font-medium text-[#1A1A1A]">
+                Instant Naira release
+              </p>
+              <p className="mt-1 text-[13px] text-[#5F6368]">
+                Enter the buyer&apos;s 6-digit code at handoff to settle funds.
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
