@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PROCESSING_PAYMENT
+  SECURED
+  SHIPPED
+  RELEASED
+  REFUNDED
+  DISPUTED
+}
+
+// ─── Vendor Profile (linked to Neon Auth user in neon_auth schema) ──────────
+
+model Vendor {
+  id            String    @id @default(cuid())
+  authUserId    String    @unique
+  email         String    @unique
+  businessName  String
+  whatsapp      String?
+  instagram     String?
+  stellarPublic String    @unique
+  privyWalletId String    @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  products      Product[]
+}
+
+// ─── Products & Shareable Links ──────────────────────────────────────────────
+
+model Product {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  vendorId      String
+  vendor        Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  imageUrl      String?
+  priceNgn      Decimal  @db.Decimal(12, 2)
+  windowMinutes Int
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  orders        Order[]
+
+  @@index([vendorId])
+}
+
+// ─── Orders & Escrow State ───────────────────────────────────────────────────
+
+model Order {
+  id                       String      @id @default(cuid())
+  token                    String      @unique
+  productId                String
+  product                  Product     @relation(fields: [productId], references: [id])
+
+  // Buyer checkout details
+  buyerName                String
+  buyerPhone               String
+  buyerEmail               String?
+  buyerAddress             String
+
+  // Payment & lifecycle
+  amountNgn                Decimal     @db.Decimal(12, 2)
+  status                   OrderStatus @default(PENDING_PAYMENT)
+  paystackReference        String?     @unique
+  paystackAuthorizationUrl String?
+  deadline                 DateTime?
+  shippedAt                DateTime?
+  disputeReason            String?
+  disputedAt               DateTime?
+  resolvedAt               DateTime?
+
+  // Release code (HMAC-SHA256 for verification + AES-256-GCM for buyer refresh)
+  codeHash                 String
+  codeEnc                  String
+  releaseAttempts          Int         @default(0)
+
+  // Ephemeral buyer Privy Stellar wallet & on-chain receipts
+  buyerStellarPublic       String      @unique
+  buyerPrivyWalletId       String      @unique
+  claimableBalanceId       String?
+  txCreate                 String?
+  txRelease                String?
+  txRefund                 String?
+
+  createdAt                DateTime    @default(now())
+  updatedAt                DateTime    @updatedAt
+
+  @@index([productId])
+  @@index([status])
+}
