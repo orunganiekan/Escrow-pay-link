@@ -43,6 +43,13 @@
       "skillPath": "skills/email-best-practices/SKILL.md",
       "computedHash": "9618340453f52b03987949227de251a953af1d47bf505975fce1f55032fb3451"
     },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "commit": "b49177d32788f2dc585c42831d845dacf1ebed2c",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "08bd5bf141cb507f46bd8347890cd985865606f15adf88295ed3a73bc9ad5d96"
+    },
     "neon": {
       "source": "neondatabase/agent-skills",
       "commit": "d3601d9e1f9398b96a1ee25047bafba5f04199eb",

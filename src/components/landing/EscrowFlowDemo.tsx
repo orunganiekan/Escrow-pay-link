@@ -44,26 +44,26 @@ export function EscrowFlowDemo() {
       {/* Main Product / Escrow Receipt Frame */}
       <div className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl shadow-[0_14px_40px_rgba(26,26,26,0.06)] overflow-hidden">
         {/* Minimal Window Header */}
-        <div className="px-5 h-12 border-b border-[#E5E5E5] flex items-center justify-between bg-[#FFFFFF]">
-          <span className="text-[13px] font-semibold tracking-tight text-[#1A1A1A]">
+        <div className="px-4 sm:px-5 h-11 sm:h-12 border-b border-[#E5E5E5] flex items-center justify-between gap-2 bg-[#FFFFFF]">
+          <span className="text-[13px] font-semibold tracking-tight text-[#1A1A1A] shrink-0">
             EscrowPay
           </span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#5F6368]">
+          <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-[#5F6368] truncate min-w-0">
             escrowpay.ng/p/vela-serum
           </span>
         </div>
 
         {/* Dynamic Body */}
-        <div className="p-5 sm:p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           {/* Status Banner */}
-          <div className="rounded-2xl bg-[#F8F6F1] border border-[#ECE8DF] p-4 transition-all duration-300">
-            <div className="flex items-center justify-between gap-2">
+          <div className="rounded-2xl bg-[#F8F6F1] border border-[#ECE8DF] p-3.5 sm:p-4 transition-all duration-300">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#5F6368]">
                 ORDER #EPL-4829
               </span>
 
               <span
-                className={`font-mono text-[11px] px-2.5 py-0.5 rounded-full border transition-all duration-300 ${
+                className={`font-mono text-[10px] sm:text-[11px] px-2.5 py-0.5 rounded-full border transition-all duration-300 ${
                   isLink
                     ? "bg-[#F2F0EB] text-[#5F6368] border-[#E5E5E5]"
                     : isLocked
@@ -74,16 +74,16 @@ export function EscrowFlowDemo() {
                 {isLink
                   ? "72h Delivery Window"
                   : isLocked
-                    ? "Funds Locked in Escrow"
+                    ? "Funds Locked"
                     : "Delivered & Released"}
               </span>
             </div>
 
             <div className="mt-3 flex items-baseline justify-between gap-3">
-              <p className="text-[16px] font-medium text-[#1A1A1A] truncate">
+              <p className="text-[15px] sm:text-[16px] font-medium text-[#1A1A1A] truncate min-w-0">
                 CE Ferulic Serum
               </p>
-              <p className="text-[20px] font-medium text-[#1A1A1A] shrink-0">
+              <p className="text-[18px] sm:text-[20px] font-medium text-[#1A1A1A] shrink-0">
                 <NairaAmount value={35000} />
               </p>
             </div>
@@ -170,7 +170,7 @@ export function EscrowFlowDemo() {
         </div>
 
         {/* Interactive Step Switcher Footer */}
-        <div className="px-5 py-3 bg-[#FAF9F6] border-t border-[#E5E5E5] flex items-center justify-between gap-2">
+        <div className="px-3 sm:px-5 py-2.5 sm:py-3 bg-[#FAF9F6] border-t border-[#E5E5E5] grid grid-cols-3 gap-1.5">
           {STEPS.map((s) => {
             const active = step === s.id;
             return (
@@ -178,7 +178,7 @@ export function EscrowFlowDemo() {
                 key={s.id}
                 type="button"
                 onClick={() => setStep(s.id)}
-                className={`flex-1 h-7 rounded-full font-mono text-[11px] transition-colors cursor-pointer ${
+                className={`h-7 px-1.5 rounded-full font-mono text-[10px] sm:text-[11px] truncate transition-colors cursor-pointer ${
                   active
                     ? "bg-[#1A1A1A] text-[#FFFFFF]"
                     : "text-[#5F6368] hover:text-[#1A1A1A]"
