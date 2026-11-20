@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { NairaAmount } from "@/components/NairaAmount";
 import { OverviewBanner } from "@/components/dashboard/OverviewBanner";
 import { auth } from "@/lib/auth/server";
-import { formatNaira } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getNgnBalance } from "@/server/stellar/accounts";
 
@@ -69,7 +69,7 @@ export default async function DashboardOverviewPage() {
           STORE OVERVIEW
         </p>
         <h1 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#1A1A1A]">
-          {vendor.businessName}
+          Overview
         </h1>
       </div>
 
@@ -84,28 +84,36 @@ export default async function DashboardOverviewPage() {
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E5E5E5]">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-              RECENT ACTIVITY
+              RECENT ORDERS
             </p>
             <h2 className="mt-1 text-[16px] font-medium text-[#1A1A1A]">
-              {productCount === 0
-                ? "Create your first protected pay link"
-                : `${productCount} active pay link${productCount === 1 ? "" : "s"}`}
+              {orders.length === 0
+                ? "No orders yet"
+                : `${orders.length} recent order${orders.length === 1 ? "" : "s"}`}
             </h2>
           </div>
-          <Link
-            href="/dashboard/products/new"
-            className="h-10 px-5 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium inline-flex items-center hover:bg-[#1A1A1A]/90"
-          >
-            + Create Link
-          </Link>
+          {productCount > 0 ? (
+            <Link
+              href="/dashboard/products"
+              className="text-[13px] font-medium text-[#5F6368] hover:text-[#1A1A1A]"
+            >
+              {productCount} pay link{productCount === 1 ? "" : "s"} →
+            </Link>
+          ) : null}
         </div>
 
         {orders.length === 0 ? (
-          <div className="py-10 text-center">
-            <p className="text-[14px] text-[#5F6368]">
-              No orders yet. Share a pay link on WhatsApp or Instagram to accept
+          <div className="py-10 flex flex-col items-center text-center">
+            <p className="text-[14px] text-[#5F6368] max-w-[380px]">
+              Share a pay link on WhatsApp or Instagram to start accepting
               protected Naira payments.
             </p>
+            <Link
+              href="/dashboard/products/new"
+              className="mt-5 h-10 px-5 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium inline-flex items-center hover:bg-[#1A1A1A]/90"
+            >
+              + Create your first pay link
+            </Link>
           </div>
         ) : (
           <ul className="divide-y divide-[#E5E5E5]">
@@ -122,8 +130,8 @@ export default async function DashboardOverviewPage() {
                     {order.buyerName} · {order.status.replaceAll("_", " ")}
                   </p>
                 </div>
-                <span className="font-mono tabular-nums text-[14px] font-medium text-[#1A1A1A] shrink-0">
-                  {formatNaira(order.amountNgn.toString())}
+                <span className="text-[14px] font-medium text-[#1A1A1A] shrink-0">
+                  <NairaAmount value={order.amountNgn.toString()} />
                 </span>
               </li>
             ))}

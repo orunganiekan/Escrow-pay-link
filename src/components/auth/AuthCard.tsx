@@ -22,16 +22,13 @@ export function AuthCardShell({
 }: AuthShellProps) {
   return (
     <main className="min-h-screen bg-[#F8F6F1] flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-[420px] mb-6 flex items-center justify-between">
+      <div className="w-full max-w-[420px] mb-6 flex items-center">
         <Link
           href="/"
           className="text-[16px] font-semibold tracking-tight text-[#1A1A1A]"
         >
           EscrowPay
         </Link>
-        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368] bg-[#FFFFFF] border border-[#E5E5E5] rounded-full px-3 py-1">
-          Escrow Protected
-        </span>
       </div>
 
       <section className="w-full max-w-[420px] bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-8">

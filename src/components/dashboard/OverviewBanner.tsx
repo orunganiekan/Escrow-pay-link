@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatNaira } from "@/lib/format";
+import { NairaAmount } from "@/components/NairaAmount";
 import { WithdrawModal } from "./WithdrawModal";
 
 interface OverviewBannerProps {
@@ -20,43 +20,45 @@ export function OverviewBanner({
   const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   const totalResolved = completedCount + disputedCount;
-  const completionRate =
-    totalResolved > 0 ? Math.round((completedCount / totalResolved) * 100) : 100;
+  const completionLabel =
+    totalResolved > 0
+      ? `${Math.round((completedCount / totalResolved) * 100)}% Completion Rate`
+      : "New Seller";
 
   return (
     <>
-      <section className="bg-[#F8F6F1] rounded-2xl p-6 flex items-center justify-between gap-6">
+      <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-6 sm:p-7 flex items-center justify-between gap-6">
         <div className="flex-1 min-w-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-[520px]">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-6 sm:gap-10">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
                 AVAILABLE BALANCE
               </p>
-              <p className="mt-1.5 font-mono tabular-nums text-[28px] sm:text-[32px] font-medium tracking-[-0.02em] text-[#1A1A1A]">
-                {formatNaira(availableBalanceNgn)}
+              <p className="mt-1.5 text-[28px] sm:text-[32px] font-medium tracking-[-0.02em] text-[#1A1A1A]">
+                <NairaAmount value={availableBalanceNgn} />
               </p>
             </div>
 
-            <div>
+            <div className="sm:pl-10 sm:border-l sm:border-[#E6E1D6]">
               <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#8A5A00]">
                 IN ESCROW
               </p>
-              <p className="mt-1.5 font-mono tabular-nums text-[28px] sm:text-[32px] font-medium tracking-[-0.02em] text-[#1A1A1A]">
-                {formatNaira(inEscrowNgn)}
+              <p className="mt-1.5 text-[28px] sm:text-[32px] font-medium tracking-[-0.02em] text-[#1A1A1A]">
+                <NairaAmount value={inEscrowNgn} />
               </p>
             </div>
           </div>
 
           <p className="mt-4 text-[13px] text-[#5F6368]">
             {completedCount} Completed · {disputedCount} Disputed ·{" "}
-            <span className="font-mono">{completionRate}%</span> Completion Rate
+            <span className="text-[#1A1A1A] font-medium">{completionLabel}</span>
           </p>
 
           <div className="mt-5">
             <button
               type="button"
               onClick={() => setWithdrawOpen(true)}
-              className="h-10 px-5 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium hover:bg-[#1A1A1A]/90 transition-opacity cursor-pointer"
+              className="h-10 px-5 rounded-full bg-[#FFFFFF] border border-[#E5E5E5] text-[#1A1A1A] text-[14px] font-medium hover:bg-[#F4F3EF] transition-colors cursor-pointer"
             >
               Withdraw to Bank
             </button>

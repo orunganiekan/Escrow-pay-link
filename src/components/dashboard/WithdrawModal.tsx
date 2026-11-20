@@ -1,6 +1,6 @@
 "use client";
 
-import { formatNaira } from "@/lib/format";
+import { NairaAmount } from "@/components/NairaAmount";
 
 interface WithdrawModalProps {
   open: boolean;
@@ -49,8 +49,8 @@ export function WithdrawModal({
           <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
             AVAILABLE BALANCE
           </p>
-          <p className="mt-1 font-mono tabular-nums text-[24px] font-medium text-[#1A1A1A]">
-            {formatNaira(availableBalanceNgn)}
+          <p className="mt-1 text-[24px] font-medium text-[#1A1A1A]">
+            <NairaAmount value={availableBalanceNgn} />
           </p>
         </div>
 
