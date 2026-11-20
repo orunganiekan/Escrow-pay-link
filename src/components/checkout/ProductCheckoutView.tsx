@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { NairaAmount } from "@/components/NairaAmount";
 import { ProductImage } from "@/components/ProductImage";
@@ -19,16 +20,29 @@ export interface PublicProductData {
   disputedOrders: number;
 }
 
+const NIGERIAN_STATES = [
+  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue",
+  "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu",
+  "FCT - Abuja", "Gombe", "Imo", "Jigawa", "Kaduna", "Kano", "Katsina",
+  "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo",
+  "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
+];
+
 export function ProductCheckoutView({
   product,
 }: {
   product: PublicProductData;
 }) {
+  const router = useRouter();
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
-  const [buyerAddress, setBuyerAddress] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
-  const [notice, setNotice] = useState<string | null>(null);
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("Lagos");
+  const [landmark, setLandmark] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const windowLabel = formatDeliveryWindow(product.windowMinutes);
   const windowEyebrow =
@@ -48,11 +62,45 @@ export function ProductCheckoutView({
     .map((w) => w[0]?.toUpperCase() || "")
     .join("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setNotice(
-      "Paystack test checkout & escrow order creation are wired in Phase 4."
-    );
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          buyerName,
+          buyerPhone,
+          buyerEmail,
+          street,
+          city,
+          state,
+          landmark: landmark || undefined,
+        }),
+      });
+
+      const data = (await res.json()) as {
+        redirectUrl?: string;
+        error?: string;
+      };
+
+      if (!res.ok || !data.redirectUrl) {
+        setError(data.error || "Could not start checkout. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      router.push(data.redirectUrl);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Network error. Please try again."
+      );
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -192,40 +240,105 @@ export function ProductCheckoutView({
 
           <div>
             <label
-              htmlFor="buyerAddress"
-              className="block text-[13px] font-medium text-[#1A1A1A] mb-1"
-            >
-              Delivery Address <span className="text-[#B42318]">*</span>
-            </label>
-            <textarea
-              id="buyerAddress"
-              rows={2}
-              required
-              value={buyerAddress}
-              onChange={(e) => setBuyerAddress(e.target.value)}
-              placeholder="14 Admiralty Way, Lekki Phase 1, Lagos"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] text-[14px] text-[#1A1A1A] placeholder:text-[#5F6368]/60 focus:outline-none focus:border-[#1A1A1A] resize-none"
-            />
-          </div>
-
-          <div>
-            <label
               htmlFor="buyerEmail"
               className="block text-[13px] font-medium text-[#1A1A1A] mb-1"
             >
-              Email{" "}
-              <span className="text-[#5F6368] font-normal">
-                (Optional — for payment receipt)
-              </span>
+              Email Address <span className="text-[#B42318]">*</span>
             </label>
             <input
               id="buyerEmail"
               type="email"
+              required
+              autoComplete="email"
               value={buyerEmail}
               onChange={(e) => setBuyerEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="amaka@example.com"
               className="w-full h-11 px-3.5 rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] text-[14px] text-[#1A1A1A] placeholder:text-[#5F6368]/60 focus:outline-none focus:border-[#1A1A1A]"
             />
+            <p className="mt-1 text-[11px] text-[#5F6368]">
+              For your Paystack receipt and order tracking link.
+            </p>
+          </div>
+
+          <div className="pt-2 border-t border-[#E5E5E5] space-y-3">
+            <div>
+              <label
+                htmlFor="street"
+                className="block text-[13px] font-medium text-[#1A1A1A] mb-1"
+              >
+                Street Address <span className="text-[#B42318]">*</span>
+              </label>
+              <input
+                id="street"
+                type="text"
+                required
+                autoComplete="street-address"
+                value={street}
+                onChange={(e) => setStreet(e.target.value)}
+                placeholder="14 Admiralty Way"
+                className="w-full h-11 px-3.5 rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] text-[14px] text-[#1A1A1A] placeholder:text-[#5F6368]/60 focus:outline-none focus:border-[#1A1A1A]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  htmlFor="city"
+                  className="block text-[13px] font-medium text-[#1A1A1A] mb-1"
+                >
+                  City / Area <span className="text-[#B42318]">*</span>
+                </label>
+                <input
+                  id="city"
+                  type="text"
+                  required
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Lekki Phase 1"
+                  className="w-full h-11 px-3.5 rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] text-[14px] text-[#1A1A1A] placeholder:text-[#5F6368]/60 focus:outline-none focus:border-[#1A1A1A]"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="state"
+                  className="block text-[13px] font-medium text-[#1A1A1A] mb-1"
+                >
+                  State <span className="text-[#B42318]">*</span>
+                </label>
+                <select
+                  id="state"
+                  required
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  className="w-full h-11 px-3 rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] text-[14px] text-[#1A1A1A] focus:outline-none focus:border-[#1A1A1A]"
+                >
+                  {NIGERIAN_STATES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="landmark"
+                className="block text-[13px] font-medium text-[#1A1A1A] mb-1"
+              >
+                Landmark / Delivery Notes{" "}
+                <span className="text-[#5F6368] font-normal">(optional)</span>
+              </label>
+              <input
+                id="landmark"
+                type="text"
+                value={landmark}
+                onChange={(e) => setLandmark(e.target.value)}
+                placeholder="Opposite Mega Chicken, call on arrival"
+                className="w-full h-11 px-3.5 rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] text-[14px] text-[#1A1A1A] placeholder:text-[#5F6368]/60 focus:outline-none focus:border-[#1A1A1A]"
+              />
+            </div>
           </div>
 
           <p className="pt-1 text-[12px] text-[#5F6368] leading-relaxed">
@@ -233,9 +346,12 @@ export function ProductCheckoutView({
             to view your release code.
           </p>
 
-          {notice ? (
-            <div className="rounded-xl bg-[#FFF4D6] border border-[#FFB800]/50 px-3.5 py-2.5 text-[13px] text-[#8A5A00]">
-              {notice}
+          {error ? (
+            <div
+              role="alert"
+              className="rounded-xl bg-[#FDECEC] border border-[#FECACA] px-3.5 py-2.5 text-[13px] text-[#B42318]"
+            >
+              {error}
             </div>
           ) : null}
         </form>
@@ -247,9 +363,12 @@ export function ProductCheckoutView({
           <button
             type="submit"
             form="checkout-form"
-            className="w-full h-12 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium hover:bg-[#1A1A1A]/90 cursor-pointer"
+            disabled={submitting}
+            className="w-full h-12 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium hover:bg-[#1A1A1A]/90 disabled:opacity-60 cursor-pointer"
           >
-            Pay {formatNaira(product.priceNgn)} Safely →
+            {submitting
+              ? "Preparing safe checkout..."
+              : `Pay ${formatNaira(product.priceNgn)} Safely →`}
           </button>
           <p className="mt-1.5 text-center text-[11px] text-[#5F6368]">
             Your money is held safely until you confirm delivery.
