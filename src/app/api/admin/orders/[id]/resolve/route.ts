@@ -4,6 +4,8 @@ import { getAdminSession } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { escrowService } from "@/server/stellar/escrow";
 
+export const maxDuration = 30;
+
 const ResolveSchema = z.object({
   action: z.enum(["release", "refund"]),
 });

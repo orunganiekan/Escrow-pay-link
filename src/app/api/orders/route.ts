@@ -7,6 +7,8 @@ import { encrypt, generateReleaseCode, hashReleaseCode } from "@/server/crypto";
 import { initializePaystackTransaction } from "@/server/paystack";
 import { createPrivyStellarAccount } from "@/server/stellar/accounts";
 
+export const maxDuration = 30;
+
 const CreateOrderSchema = z.object({
   productId: z.string().trim().min(1),
   buyerName: z.string().trim().min(2, "Enter your full name.").max(100),

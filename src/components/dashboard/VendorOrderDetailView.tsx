@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { NairaAmount } from "@/components/NairaAmount";
 import { ProductImage } from "@/components/ProductImage";
+import { SixDigitCodeInput } from "@/components/dashboard/SixDigitCodeInput";
 import { ChainReceiptDrawer } from "@/components/order/ChainReceiptDrawer";
 import { OrderStatusBadge } from "@/components/order/OrderStatusBadge";
 import { postJson } from "@/lib/fetch-json";
@@ -183,26 +184,18 @@ export function VendorOrderDetailView({
               </h2>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                required
-                disabled={attemptsRemaining <= 0}
+            <div className="flex flex-col items-start gap-4">
+              <SixDigitCodeInput
                 value={code}
-                onChange={(e) =>
-                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                }
-                placeholder="000000"
-                className="flex-1 h-12 px-4 rounded-xl bg-[#F8F6F1] border border-[#E5E5E5] text-center font-mono text-[22px] tracking-[0.26em] text-[#1A1A1A] focus:outline-none focus:border-[#1A1A1A]"
+                onChange={setCode}
+                disabled={attemptsRemaining <= 0}
               />
               <button
                 type="submit"
                 disabled={
                   releasing || code.length !== 6 || attemptsRemaining <= 0
                 }
-                className="h-12 px-6 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium hover:bg-[#1A1A1A]/90 disabled:opacity-60 cursor-pointer shrink-0"
+                className="h-11 px-6 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium hover:bg-[#2E2E2E] active:scale-[0.98] transition-all disabled:opacity-60 cursor-pointer"
               >
                 {releasing ? "Releasing…" : "Confirm & Release"}
               </button>

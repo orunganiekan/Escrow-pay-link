@@ -5,6 +5,8 @@ import { getAuthenticatedVendor } from "@/lib/vendor";
 import { verifyReleaseCode } from "@/server/crypto";
 import { escrowService } from "@/server/stellar/escrow";
 
+export const maxDuration = 30;
+
 const MAX_RELEASE_ATTEMPTS = 5;
 
 const ReleaseSchema = z.object({

@@ -1,53 +1,23 @@
 ---
 name: Warm Editorial Escrow
 colors:
-  surface: '#f7f9ff'
-  surface-dim: '#d7dae0'
-  surface-bright: '#f7f9ff'
-  surface-container-lowest: '#ffffff'
-  surface-container-low: '#f1f4fa'
-  surface-container: '#ebeef4'
-  surface-container-high: '#e5e8ee'
-  surface-container-highest: '#dfe3e8'
-  on-surface: '#181c20'
-  on-surface-variant: '#444748'
-  inverse-surface: '#2d3135'
-  inverse-on-surface: '#eef1f7'
-  outline: '#747878'
-  outline-variant: '#c4c7c7'
-  surface-tint: '#5f5e5e'
-  primary: '#000000'
-  on-primary: '#ffffff'
-  primary-container: '#1c1b1b'
-  on-primary-container: '#858383'
-  inverse-primary: '#c8c6c5'
-  secondary: '#7c5800'
-  on-secondary: '#ffffff'
-  secondary-container: '#feb700'
-  on-secondary-container: '#6b4b00'
-  tertiary: '#000000'
-  on-tertiary: '#ffffff'
-  tertiary-container: '#1b1c19'
-  on-tertiary-container: '#848480'
-  error: '#ba1a1a'
-  on-error: '#ffffff'
-  error-container: '#ffdad6'
-  on-error-container: '#93000a'
-  primary-fixed: '#e5e2e1'
-  primary-fixed-dim: '#c8c6c5'
-  on-primary-fixed: '#1c1b1b'
-  on-primary-fixed-variant: '#474746'
-  secondary-fixed: '#ffdea8'
-  secondary-fixed-dim: '#ffba20'
-  on-secondary-fixed: '#271900'
-  on-secondary-fixed-variant: '#5e4200'
-  tertiary-fixed: '#e4e2dd'
-  tertiary-fixed-dim: '#c8c6c2'
-  on-tertiary-fixed: '#1b1c19'
-  on-tertiary-fixed-variant: '#474744'
-  background: '#f7f9ff'
-  on-background: '#181c20'
-  surface-variant: '#dfe3e8'
+  bg-canvas: '#FFFFFF'
+  bg-warm: '#F8F6F1'
+  bg-subtle: '#F4F3EF'
+  ink-primary: '#1A1A1A'
+  ink-muted: '#5F6368'
+  border-hairline: '#E5E5E5'
+  accent-amber: '#FFB800'
+  status-pending-bg: '#F2F0EB'
+  status-pending-fg: '#5F6368'
+  status-secured-bg: '#FFF4D6'
+  status-secured-fg: '#8A5A00'
+  status-shipped-bg: '#EEF4FF'
+  status-shipped-fg: '#1E40AF'
+  status-released-bg: '#EBF7EE'
+  status-released-fg: '#1E6B3A'
+  status-disputed-bg: '#FDECEC'
+  status-disputed-fg: '#B42318'
 typography:
   headline-lg:
     fontFamily: Plus Jakarta Sans
@@ -207,7 +177,7 @@ The shape language uses deliberate contrast between container structural frames 
 ### Escrow Countdown Timer Bar
 - Positioned directly above key release actions or at the card crest.
 - Height: `4px`. Background track: `#F2F0EB`. Active progress fill: `#FFB800`.
-- Accompanied by monospaced tabular text (`JetBrains Mono`, 12px) specifying exact delivery release windows (e.g., `AUTO-RELEASE IN 23:59:41`).
+- Accompanied by monospaced tabular text (`JetBrains Mono`, 12px) specifying remaining delivery window time (e.g., `47h 18m left for delivery`).
 
 ### Amount Display & OTP Release Fields
 - **Amount Card:** Centered monetary card holding the current payment state. ₦ currency symbol rendered alongside numeric amounts in `JetBrains Mono` 28px (`label-amount-lg`).

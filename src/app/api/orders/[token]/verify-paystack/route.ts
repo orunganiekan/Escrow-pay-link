@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { confirmOrderPayment } from "@/server/orders/confirm";
 import { toKobo, verifyPaystackTransaction } from "@/server/paystack";
 
+export const maxDuration = 30;
+
 export async function POST(
   _request: Request,
   context: { params: Promise<{ token: string }> }

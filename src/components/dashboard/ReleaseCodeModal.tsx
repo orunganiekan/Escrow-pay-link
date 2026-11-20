@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { NairaAmount } from "@/components/NairaAmount";
+import { SixDigitCodeInput } from "@/components/dashboard/SixDigitCodeInput";
 import { postJson } from "@/lib/fetch-json";
 
 interface ReleaseCodeModalProps {
@@ -99,18 +100,12 @@ export function ReleaseCodeModal({
         </p>
 
         <div>
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            required
-            disabled={attemptsRemaining <= 0}
+          <SixDigitCodeInput
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            placeholder="000000"
-            className="w-full h-14 px-4 rounded-xl bg-[#F8F6F1] border border-[#E5E5E5] text-center font-mono text-[26px] tracking-[0.28em] text-[#1A1A1A] placeholder:text-[#5F6368]/40 focus:outline-none focus:border-[#1A1A1A]"
+            onChange={setCode}
+            disabled={attemptsRemaining <= 0}
           />
-          <p className="mt-1.5 text-[12px] text-[#5F6368] text-center">
+          <p className="mt-2.5 text-[12px] text-[#5F6368] text-center">
             {attemptsRemaining} of 5 attempts remaining
           </p>
         </div>

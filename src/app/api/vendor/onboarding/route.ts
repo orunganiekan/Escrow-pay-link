@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 import { createPrivyStellarAccount } from "@/server/stellar/accounts";
 
+export const maxDuration = 30;
+
 const OnboardingSchema = z.object({
   businessName: z.string().trim().min(2, "Business name must be at least 2 characters.").max(80),
   whatsapp: z.string().trim().max(30).optional(),

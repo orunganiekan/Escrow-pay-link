@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { confirmOrderPayment } from "@/server/orders/confirm";
 import { toKobo, verifyPaystackWebhookSignature } from "@/server/paystack";
 
+export const maxDuration = 30;
+
 interface PaystackWebhookPayload {
   event?: string;
   data?: {

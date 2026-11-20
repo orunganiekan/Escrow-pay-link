@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { getAppUrl } from "@/lib/format";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -21,9 +22,25 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getAppUrl()),
   title: "EscrowPay — Protected Naira Payment Links",
   description:
-    "Social-commerce Naira payment links with delivery-window protection and a 6-digit release code.",
+    "Sell online without blind trust. Share Naira payment links with delivery-window protection and a 6-digit release code.",
+  openGraph: {
+    title: "EscrowPay — Sell Online without blind trust",
+    description:
+      "Protected Naira payment links for WhatsApp and Instagram commerce. Zero signup for buyers, instant settlement on delivery.",
+    type: "website",
+    siteName: "EscrowPay",
+    images: [{ url: "/images/hero-editorial.jpg" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "EscrowPay — Sell Online without blind trust",
+    description:
+      "Protected Naira payment links for WhatsApp and Instagram commerce.",
+    images: ["/images/hero-editorial.jpg"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
