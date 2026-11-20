@@ -8,7 +8,7 @@ Operational findings, edge cases, hosting checklist, and production-hardening re
 
 Before deploying to Vercel:
 - **Serverless `maxDuration`:** Routes invoking Privy + Stellar Horizon (`POST /api/orders`, `POST /api/vendor/onboarding`, `POST /api/orders/[token]/verify-paystack`, `POST /api/webhooks/paystack`, release, refund, and admin resolve) can take 5–8 seconds per ledger close; export `export const maxDuration = 30` so slow ledgers don't hit Vercel's default 10s timeout.
-- **Environment Variables:** Set all variables from `.env.example` in Vercel with `NEXT_PUBLIC_APP_URL="https://<your-vercel-domain>"`.
+- **Environment Variables:** Set all variables from `.env.example` in Vercel with `NEXT_PUBLIC_APP_URL="https://<your-vercel-domain>"` (including `RESEND_API_KEY` and `RESEND_FROM_EMAIL` for cross-device buyer OTP verification on `/o/[token]`).
 - **Neon Auth Trusted Domain:** Add the deployed Vercel domain under **Neon Console → Auth → Trusted Domains**.
 - **Paystack Webhook URL:** Configure `https://<your-vercel-domain>/api/webhooks/paystack` in **Paystack Dashboard → Settings → API Keys & Webhooks**.
 

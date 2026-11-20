@@ -18,6 +18,29 @@ function getEncryptionKey(): Buffer {
 }
 
 /**
+ * Computes a domain-separated HMAC-SHA256 hex digest keyed with ENCRYPTION_KEY.
+ */
+export function hmacSha256Hex(purpose: string, value: string): string {
+  return crypto
+    .createHmac("sha256", getEncryptionKey())
+    .update(`${purpose}:${value}`, "utf8")
+    .digest("hex");
+}
+
+/**
+ * Constant-time equality check for two hex-encoded digests.
+ */
+export function constantTimeEqualHex(aHex: string, bHex: string): boolean {
+  if (!/^[0-9a-fA-F]+$/.test(aHex) || !/^[0-9a-fA-F]+$/.test(bHex)) {
+    return false;
+  }
+  const a = Buffer.from(aHex, "hex");
+  const b = Buffer.from(bHex, "hex");
+  if (a.length === 0 || a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
+/**
  * Encrypts a UTF-8 string using AES-256-GCM with ENCRYPTION_KEY.
  * Format: v1:<ivHex>:<authTagHex>:<ciphertextHex>
  */
@@ -65,11 +88,7 @@ export function decrypt(payload: string): string {
  * Computes an HMAC-SHA256 digest of the 6-digit release code using ENCRYPTION_KEY.
  */
 export function hashReleaseCode(code: string): string {
-  const normalized = code.trim();
-  return crypto
-    .createHmac("sha256", getEncryptionKey())
-    .update(`release-code:${normalized}`, "utf8")
-    .digest("hex");
+  return hmacSha256Hex("release-code", code.trim());
 }
 
 /**
@@ -79,15 +98,11 @@ export function verifyReleaseCode(
   candidate: string,
   expectedHash: string
 ): boolean {
-  const candidateHash = hashReleaseCode(candidate);
-  const a = Buffer.from(candidateHash, "hex");
-  const b = Buffer.from(expectedHash, "hex");
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
+  return constantTimeEqualHex(hashReleaseCode(candidate), expectedHash);
 }
 
 /**
- * Generates a cryptographically random 6-digit release code.
+ * Generates a cryptographically random 6-digit code.
  */
 export function generateReleaseCode(): string {
   return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");

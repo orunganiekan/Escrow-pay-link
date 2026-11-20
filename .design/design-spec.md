@@ -35,26 +35,26 @@ lookup:
     buyer_order_tracking:
       route: "/o/[token]"
       viewport: "Mobile 390px (Desktop centered 520px)"
-      lines: "181-214"
-      includes: [PENDING_PAYMENT, PROCESSING_PAYMENT, SECURED, SHIPPED, deadline_expired, DISPUTED, RELEASED, REFUNDED, chain_receipt_drawer]
+      lines: "181-217"
+      includes: [device_otp_gate, PENDING_PAYMENT, PROCESSING_PAYMENT, SECURED, SHIPPED, deadline_expired, DISPUTED, RELEASED, REFUNDED, chain_receipt_drawer]
     auth_and_onboarding:
       routes: ["/login", "/signup", "/onboarding"]
-      lines: "215-222"
+      lines: "218-225"
     seller_dashboard:
       route: "/dashboard/*"
       viewport: "1440px / 390px (4-tab bottom nav)"
-      lines: "223-239"
+      lines: "226-242"
       includes: [sidebar, bottom_nav, summary_banner, withdraw_modal, filter_bar, order_cards, release_code_modal, pay_links]
     create_pay_link:
       route: "/dashboard/products/new"
-      lines: "240-251"
+      lines: "243-254"
       includes: [image_url_preview, window_pills_custom, whatsapp_og_preview]
     admin_disputes:
       route: "/admin"
-      lines: "252-259"
+      lines: "255-262"
     system_states:
       routes: ["not-found.tsx", "error.tsx", "loading.tsx", "icon.svg"]
-      lines: "260-264"
+      lines: "263-267"
 ---
 
 # Escrow Pay Links — UI Design Specification
@@ -182,7 +182,10 @@ All status badges use `rounded-full`, `12px` medium text (`font-sans`), `px-2.5 
 *Unified digital paper receipt sheet (`max-w-[520px]`) serving all 7 `OrderStatus` states.*
 
 #### Top Minimal Header
-- Wordmark on left + **`Copy order link`** outline pill on right (toggles to `Copied ✓`) so buyers never lose the URL in WhatsApp's in-app browser.
+- Wordmark on left + **`Copy order link`** outline pill on right when verified (toggles to `Copied ✓`), or **`Escrow Protected`** pill when awaiting device verification.
+
+#### Cross-Device Verification Gate (Unrecognized Browser)
+- If `/o/[token]` is opened without the checkout browser's `HttpOnly` cookie, the receipt hides the 6-digit release code, delivery details, and Dispute/Refund actions and renders **`BuyerAccessGate`**: a 6-digit Email OTP challenge (`SixDigitCodeInput`) sent to the buyer's masked checkout email (`request-otp` / `verify-otp`).
 
 #### State 2A: `PENDING_PAYMENT` (Awaiting Paystack Checkout)
 - Monospace eyebrow `ORDER #EPL-8042` + Warm Grey pill `Awaiting Payment`.

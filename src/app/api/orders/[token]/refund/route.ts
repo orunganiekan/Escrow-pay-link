@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { hasBuyerOrderAccess } from "@/server/orders/buyer-access";
 import { escrowService } from "@/server/stellar/escrow";
 
 export const maxDuration = 30;
@@ -14,6 +15,7 @@ export async function POST(
     where: { token },
     select: {
       id: true,
+      token: true,
       status: true,
       deadline: true,
       claimableBalanceId: true,
@@ -24,6 +26,13 @@ export async function POST(
 
   if (!order) {
     return NextResponse.json({ error: "Order not found." }, { status: 404 });
+  }
+
+  if (!(await hasBuyerOrderAccess({ id: order.id, token: order.token }))) {
+    return NextResponse.json(
+      { error: "Please verify your buyer email on this device first." },
+      { status: 403 }
+    );
   }
 
   if (

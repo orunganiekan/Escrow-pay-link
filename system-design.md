@@ -376,9 +376,11 @@ stateDiagram-v2
 - `GET/POST /api/products` *(supports `?page=` & `?limit=`)*
 - `PATCH /api/products/[id]` *(toggle active state)*
 - `POST /api/orders`
+- `POST /api/orders/[token]/access/request-otp` *(cross-device 6-digit email OTP challenge via Resend)*
+- `POST /api/orders/[token]/access/verify-otp` *(verifies OTP and sets device-bound buyer cookie)*
 - `POST /api/orders/[token]/verify-paystack` *(idempotent callback verification)*
-- `POST /api/orders/[token]/refund`
-- `POST /api/orders/[token]/dispute`
+- `POST /api/orders/[token]/refund` *(requires device-bound buyer cookie)*
+- `POST /api/orders/[token]/dispute` *(requires device-bound buyer cookie)*
 - `POST /api/webhooks/paystack` *(verifies `x-paystack-signature` HMAC-SHA512)*
 - `POST /api/vendor/orders/[id]/ship` *(namespaced under `/api/vendor/` to avoid `[token]` vs `[id]` sibling route conflict)*
 - `POST /api/vendor/orders/[id]/release`
@@ -417,6 +419,10 @@ ESCROW_SECRET="S..."
 
 # Admin Arbitration Access
 ADMIN_EMAIL="admin@example.com"
+
+# Transactional Email (Resend — optional in local dev, required for cross-device buyer OTP in production)
+RESEND_API_KEY="re_..."
+RESEND_FROM_EMAIL="EscrowPay <no-reply@yourdomain.com>"
 ```
 
 ---
@@ -424,7 +430,8 @@ ADMIN_EMAIL="admin@example.com"
 ## 9. Security & Reliability Guardrails
 
 1. **No User Private Keys in Postgres:** Vendor and buyer Stellar private keys live strictly inside Privy's TEE; our DB only stores `stellarPublic` and `privyWalletId`.
-2. **Verified Paystack Events Only:** `/api/webhooks/paystack` verifies `x-paystack-signature` using `crypto.timingSafeEqual` against the raw request body, and both webhook + callback verify exact `amount` (in kobo) and `currency === "NGN"` before minting/escrowing.
-3. **Race-Safe Idempotency:** `PENDING_PAYMENT -> PROCESSING_PAYMENT` atomic conditional update prevents simultaneous Paystack webhook + redirect callback from double-minting or creating duplicate Claimable Balances.
-4. **Release Code Protection:** Verified with `HMAC-SHA256` + `crypto.timingSafeEqual`, locked after 5 failed vendor attempts (`releaseAttempts >= 5`), while `codeEnc` lets the buyer reliably view their code across mobile browser reloads.
-5. **Clean Production Path:** Swapping from test to live requires switching Paystack keys, adding a licensed NGN/cNGN Stellar anchor or pre-funded float for real on-ramp/off-ramp (see [`production-notes.md`](./production-notes.md)), and optionally replacing `ClaimableBalanceEscrow` with a Soroban contract behind `EscrowService`.
+2. **Device-Bound Buyer Order Access:** `POST /api/orders` sets an `HttpOnly`, `SameSite=Lax` HMAC-signed cookie (`src/server/orders/buyer-access.ts`). Opening `/o/[token]` from an unrecognized browser hides buyer PII, release codes, and dispute/refund controls behind a 6-digit Email OTP challenge (`request-otp` / `verify-otp`). Both `POST /api/orders/[token]/dispute` and `POST /api/orders/[token]/refund` enforce the cookie server-side.
+3. **Verified Paystack Events Only:** `/api/webhooks/paystack` verifies `x-paystack-signature` using `crypto.timingSafeEqual` against the raw request body, and both webhook + callback verify exact `amount` (in kobo) and `currency === "NGN"` before minting/escrowing.
+4. **Race-Safe Idempotency:** `PENDING_PAYMENT -> PROCESSING_PAYMENT` atomic conditional update prevents simultaneous Paystack webhook + redirect callback from double-minting or creating duplicate Claimable Balances.
+5. **Release Code Protection:** Verified with `HMAC-SHA256` + `crypto.timingSafeEqual`, locked after 5 failed vendor attempts (`releaseAttempts >= 5`), while `codeEnc` lets the buyer reliably view their code across mobile browser reloads.
+6. **Clean Production Path:** Swapping from test to live requires switching Paystack keys, adding a licensed NGN/cNGN Stellar anchor or pre-funded float for real on-ramp/off-ramp (see [`production-notes.md`](./production-notes.md)), and optionally replacing `ClaimableBalanceEscrow` with a Soroban contract behind `EscrowService`.

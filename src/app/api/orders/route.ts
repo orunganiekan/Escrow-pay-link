@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getAppUrl } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { encrypt, generateReleaseCode, hashReleaseCode } from "@/server/crypto";
+import { issueBuyerAccessCookie } from "@/server/orders/buyer-access";
 import { initializePaystackTransaction } from "@/server/paystack";
 import { createPrivyStellarAccount } from "@/server/stellar/accounts";
 
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
       }),
     ]);
 
-    await prisma.order.create({
+    const createdOrder = await prisma.order.create({
       data: {
         token,
         productId: product.id,
@@ -98,9 +99,10 @@ export async function POST(request: Request) {
         buyerStellarPublic: publicKey,
         buyerPrivyWalletId: privyWalletId,
       },
+      select: { id: true, token: true },
     });
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         token,
         redirectUrl: `/o/${token}`,
@@ -108,6 +110,8 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
+    issueBuyerAccessCookie(response, createdOrder);
+    return response;
   } catch (err) {
     console.error("[POST /api/orders] Checkout init failed:", err);
     return NextResponse.json(

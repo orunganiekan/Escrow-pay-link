@@ -2,6 +2,10 @@ import { notFound } from "next/navigation";
 import { BuyerOrderView } from "@/components/order/BuyerOrderView";
 import { prisma } from "@/lib/prisma";
 import { decrypt } from "@/server/crypto";
+import {
+  hasBuyerOrderAccess,
+  maskEmail,
+} from "@/server/orders/buyer-access";
 
 export const instant = false;
 
@@ -34,8 +38,13 @@ export default async function BuyerOrderPage({
     notFound();
   }
 
+  const hasAccess = await hasBuyerOrderAccess({
+    id: order.id,
+    token: order.token,
+  });
+
   const releaseCode =
-    order.status === "SECURED" || order.status === "SHIPPED"
+    hasAccess && (order.status === "SECURED" || order.status === "SHIPPED")
       ? decrypt(order.codeEnc)
       : null;
 
@@ -47,18 +56,22 @@ export default async function BuyerOrderPage({
         token: order.token,
         status: order.status,
         amountNgn: order.amountNgn.toString(),
-        buyerName: order.buyerName,
-        buyerAddress: order.buyerAddress,
-        paystackAuthorizationUrl: order.paystackAuthorizationUrl,
+        hasAccess,
+        maskedBuyerEmail: maskEmail(order.buyerEmail),
+        buyerName: hasAccess ? order.buyerName : null,
+        buyerAddress: hasAccess ? order.buyerAddress : null,
+        paystackAuthorizationUrl: hasAccess
+          ? order.paystackAuthorizationUrl
+          : null,
         deadlineIso: order.deadline ? order.deadline.toISOString() : null,
         shippedAtIso: order.shippedAt ? order.shippedAt.toISOString() : null,
-        disputeReason: order.disputeReason,
+        disputeReason: hasAccess ? order.disputeReason : null,
         resolvedAtIso: order.resolvedAt ? order.resolvedAt.toISOString() : null,
         releaseCode,
-        claimableBalanceId: order.claimableBalanceId,
-        txCreate: order.txCreate,
-        txRelease: order.txRelease,
-        txRefund: order.txRefund,
+        claimableBalanceId: hasAccess ? order.claimableBalanceId : null,
+        txCreate: hasAccess ? order.txCreate : null,
+        txRelease: hasAccess ? order.txRelease : null,
+        txRefund: hasAccess ? order.txRefund : null,
         productName: order.product.name,
         productImageUrl: order.product.imageUrl,
         windowMinutes: order.product.windowMinutes,

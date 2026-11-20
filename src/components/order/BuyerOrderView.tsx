@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { NairaAmount } from "@/components/NairaAmount";
 import { ProductImage } from "@/components/ProductImage";
+import { BuyerAccessGate } from "@/components/order/BuyerAccessGate";
 import { ChainReceiptDrawer } from "@/components/order/ChainReceiptDrawer";
 import { OrderStatusBadge } from "@/components/order/OrderStatusBadge";
 import { postJson } from "@/lib/fetch-json";
@@ -15,8 +16,10 @@ export interface BuyerOrderData {
   token: string;
   status: string;
   amountNgn: string;
-  buyerName: string;
-  buyerAddress: string;
+  hasAccess: boolean;
+  maskedBuyerEmail: string | null;
+  buyerName: string | null;
+  buyerAddress: string | null;
   paystackAuthorizationUrl: string | null;
   deadlineIso: string | null;
   shippedAtIso: string | null;
@@ -224,13 +227,19 @@ export function BuyerOrderView({
           >
             EscrowPay
           </Link>
-          <button
-            type="button"
-            onClick={handleCopyOrderLink}
-            className="h-8 px-3.5 rounded-full border border-[#E5E5E5] bg-[#FFFFFF] text-[12px] font-medium text-[#1A1A1A] hover:bg-[#F4F3EF] active:scale-[0.97] transition-all cursor-pointer"
-          >
-            {copiedLink ? "Copied ✓" : "Copy order link"}
-          </button>
+          {order.hasAccess ? (
+            <button
+              type="button"
+              onClick={handleCopyOrderLink}
+              className="h-8 px-3.5 rounded-full border border-[#E5E5E5] bg-[#FFFFFF] text-[12px] font-medium text-[#1A1A1A] hover:bg-[#F4F3EF] active:scale-[0.97] transition-all cursor-pointer"
+            >
+              {copiedLink ? "Copied ✓" : "Copy order link"}
+            </button>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F8F6F1] border border-[#E5E5E5] px-3 py-1 text-[12px] font-medium text-[#1A1A1A]">
+              Escrow Protected
+            </span>
+          )}
         </div>
       </header>
 
@@ -308,7 +317,7 @@ export function BuyerOrderView({
                   <h1 className="font-display font-medium text-[22px] tracking-[-0.015em] text-[#1A1A1A] leading-snug">
                     Payout frozen for review.
                   </h1>
-                  {order.disputeReason ? (
+                  {order.hasAccess && order.disputeReason ? (
                     <p className="text-[13px] text-[#1A1A1A] bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg p-3">
                       {order.disputeReason}
                     </p>
@@ -352,8 +361,17 @@ export function BuyerOrderView({
             </div>
           ) : null}
 
+          {/* Device Verification Gate (when opened on an unrecognized browser) */}
+          {!order.hasAccess ? (
+            <BuyerAccessGate
+              token={order.token}
+              maskedEmail={order.maskedBuyerEmail}
+            />
+          ) : null}
+
           {/* 6-Digit Release Code Band */}
-          {(order.status === "SECURED" || order.status === "SHIPPED") &&
+          {order.hasAccess &&
+          (order.status === "SECURED" || order.status === "SHIPPED") &&
           order.releaseCode ? (
             <div className="p-6 text-center space-y-2.5 border-b border-[#E5E5E5]">
               <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
@@ -381,7 +399,8 @@ export function BuyerOrderView({
           ) : null}
 
           {/* Paystack Launch Band (PENDING_PAYMENT) */}
-          {order.status === "PENDING_PAYMENT" &&
+          {order.hasAccess &&
+          order.status === "PENDING_PAYMENT" &&
           !isProcessing &&
           order.paystackAuthorizationUrl ? (
             <div className="p-5 sm:p-6 space-y-2.5 border-b border-[#E5E5E5]">
@@ -431,16 +450,19 @@ export function BuyerOrderView({
               </span>
             </div>
 
-            <div className="pt-3.5 border-t border-[#E5E5E5] text-[13px] text-[#5F6368] space-y-0.5">
-              <p className="text-[#1A1A1A] font-medium">{order.buyerName}</p>
-              <p>{order.buyerAddress}</p>
-            </div>
+            {order.hasAccess && order.buyerName && order.buyerAddress ? (
+              <div className="pt-3.5 border-t border-[#E5E5E5] text-[13px] text-[#5F6368] space-y-0.5">
+                <p className="text-[#1A1A1A] font-medium">{order.buyerName}</p>
+                <p>{order.buyerAddress}</p>
+              </div>
+            ) : null}
           </div>
         </article>
 
-        {order.status === "SECURED" ||
-        order.status === "SHIPPED" ||
-        (order.status === "DISPUTED" && isExpired) ? (
+        {order.hasAccess &&
+        (order.status === "SECURED" ||
+          order.status === "SHIPPED" ||
+          (order.status === "DISPUTED" && isExpired)) ? (
           <section className="pt-1 space-y-2.5">
             {isExpired ? (
               <button
@@ -492,7 +514,7 @@ export function BuyerOrderView({
           </section>
         ) : null}
 
-        {showPostPayment ? (
+        {order.hasAccess && showPostPayment ? (
           <ChainReceiptDrawer
             status={order.status}
             txCreate={order.txCreate}
