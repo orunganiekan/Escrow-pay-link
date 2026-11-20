@@ -1,13 +1,11 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { DELIVERY_WINDOW_PRESETS } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedVendor } from "@/lib/vendor";
 
-const ALLOWED_WINDOWS: number[] = DELIVERY_WINDOW_PRESETS.map(
-  (p) => p.minutes
-);
+const MIN_WINDOW_MINUTES = 2;
+const MAX_WINDOW_MINUTES = 43200; // 30 days
 
 const CreateProductSchema = z.object({
   name: z
@@ -40,9 +38,8 @@ const CreateProductSchema = z.object({
   windowMinutes: z
     .number()
     .int()
-    .refine((v) => ALLOWED_WINDOWS.includes(v), {
-      message: "Select a valid delivery window.",
-    }),
+    .min(MIN_WINDOW_MINUTES, "Delivery window must be at least 2 minutes.")
+    .max(MAX_WINDOW_MINUTES, "Delivery window cannot exceed 30 days."),
 });
 
 const SLUG_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
@@ -56,15 +53,21 @@ function generateSlug(length = 7): string {
   return out;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const vendor = await getAuthenticatedVendor();
   if (!vendor) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const page = Math.max(1, Number(searchParams.get("page") || "1") || 1);
+  const pageSize = 50;
+
   const products = await prisma.product.findMany({
     where: { vendorId: vendor.id },
     orderBy: { createdAt: "desc" },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
     include: {
       _count: { select: { orders: true } },
     },

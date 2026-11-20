@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PaginationControls } from "@/components/PaginationControls";
 import { AdminDisputesView } from "@/components/admin/AdminDisputesView";
 import { getAdminSession } from "@/lib/admin";
 import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 
 export const instant = false;
+const PAGE_SIZE = 20;
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const { data: session } = await auth.getSession();
   if (!session?.user) {
     redirect("/login");
@@ -39,9 +45,20 @@ export default async function AdminPage() {
     );
   }
 
+  const query = await searchParams;
+  const requestedPage = Math.max(1, Number(query.page || "1") || 1);
+
+  const totalCount = await prisma.order.count({
+    where: { status: "DISPUTED" },
+  });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
+
   const disputedOrders = await prisma.order.findMany({
     where: { status: "DISPUTED" },
     orderBy: { disputedAt: "desc" },
+    skip: (currentPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
     include: {
       product: {
         select: {
@@ -92,11 +109,17 @@ export default async function AdminPage() {
             ADMIN ARBITRATION
           </p>
           <h1 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#1A1A1A]">
-            Open disputes ({serialized.length})
+            Open disputes ({totalCount})
           </h1>
         </div>
 
         <AdminDisputesView disputes={serialized} />
+
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          basePath="/admin"
+        />
       </div>
     </main>
   );

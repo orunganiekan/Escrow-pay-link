@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { NairaAmount } from "@/components/NairaAmount";
 import { ProductImage } from "@/components/ProductImage";
+import { WhatsAppShareButton } from "@/components/WhatsAppShareButton";
 import {
   buildWhatsAppShareUrl,
   DELIVERY_WINDOW_PRESETS,
@@ -27,10 +28,24 @@ export function CreateProductForm({ appUrl }: { appUrl: string }) {
   const [description, setDescription] = useState("");
   const [priceInput, setPriceInput] = useState("");
   const [windowMinutes, setWindowMinutes] = useState<number>(2880);
+  const [isCustomWindow, setIsCustomWindow] = useState(false);
+  const [customValue, setCustomValue] = useState("6");
+  const [customUnit, setCustomUnit] = useState<"minutes" | "hours" | "days">(
+    "hours"
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [created, setCreated] = useState<CreatedProduct | null>(null);
   const [copied, setCopied] = useState(false);
+
+  function getEffectiveWindowMinutes(): number {
+    if (!isCustomWindow) return windowMinutes;
+    const raw = Number(customValue);
+    if (!Number.isFinite(raw) || raw <= 0) return 0;
+    const multiplier =
+      customUnit === "days" ? 1440 : customUnit === "hours" ? 60 : 1;
+    return Math.round(raw * multiplier);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,6 +59,13 @@ export function CreateProductForm({ appUrl }: { appUrl: string }) {
       return;
     }
 
+    const effectiveWindow = getEffectiveWindowMinutes();
+    if (effectiveWindow < 2 || effectiveWindow > 43200) {
+      setError("Delivery window must be between 2 minutes and 30 days.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/products", {
         method: "POST",
@@ -53,7 +75,7 @@ export function CreateProductForm({ appUrl }: { appUrl: string }) {
           description: description || undefined,
           imageUrl: imageUrl || undefined,
           priceNgn: parsedPrice,
-          windowMinutes,
+          windowMinutes: effectiveWindow,
         }),
       });
 
@@ -163,14 +185,7 @@ export function CreateProductForm({ appUrl }: { appUrl: string }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 pt-2">
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="h-11 px-6 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium inline-flex items-center hover:bg-[#1A1A1A]/90"
-          >
-            Share to WhatsApp
-          </a>
+          <WhatsAppShareButton href={whatsappHref} variant="primary" />
           <Link
             href={`/p/${created.slug}`}
             target="_blank"
@@ -301,20 +316,23 @@ export function CreateProductForm({ appUrl }: { appUrl: string }) {
           Delivery Window
         </span>
         <div
-          className="inline-flex flex-wrap gap-1.5 bg-[#F8F6F1] p-1.5 rounded-2xl border border-[#ECE8DF]"
+          className="grid grid-cols-3 sm:inline-flex gap-1.5 bg-[#F8F6F1] p-1.5 rounded-2xl border border-[#ECE8DF]"
           role="radiogroup"
           aria-label="Delivery window"
         >
           {DELIVERY_WINDOW_PRESETS.map((preset) => {
-            const selected = windowMinutes === preset.minutes;
+            const selected = !isCustomWindow && windowMinutes === preset.minutes;
             return (
               <button
                 key={preset.minutes}
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                onClick={() => setWindowMinutes(preset.minutes)}
-                className={`h-9 px-3.5 rounded-full text-[13px] font-medium transition-colors cursor-pointer ${
+                onClick={() => {
+                  setIsCustomWindow(false);
+                  setWindowMinutes(preset.minutes);
+                }}
+                className={`h-9 px-3 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors cursor-pointer ${
                   selected
                     ? "bg-[#1A1A1A] text-[#FFFFFF]"
                     : "text-[#5F6368] hover:text-[#1A1A1A]"
@@ -324,7 +342,48 @@ export function CreateProductForm({ appUrl }: { appUrl: string }) {
               </button>
             );
           })}
+          <button
+            type="button"
+            role="radio"
+            aria-checked={isCustomWindow}
+            onClick={() => setIsCustomWindow(true)}
+            className={`h-9 px-3 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              isCustomWindow
+                ? "bg-[#1A1A1A] text-[#FFFFFF]"
+                : "text-[#5F6368] hover:text-[#1A1A1A]"
+            }`}
+          >
+            Custom
+          </button>
         </div>
+
+        {isCustomWindow ? (
+          <div className="mt-3 grid grid-cols-2 gap-3 max-w-[320px]">
+            <input
+              type="number"
+              min={1}
+              max={720}
+              required
+              aria-label="Custom delivery duration"
+              value={customValue}
+              onChange={(e) => setCustomValue(e.target.value)}
+              className="h-11 px-3.5 rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] font-mono tabular-nums text-[14px] text-[#1A1A1A] focus:outline-none focus:border-[#1A1A1A]"
+            />
+            <select
+              aria-label="Custom delivery unit"
+              value={customUnit}
+              onChange={(e) =>
+                setCustomUnit(e.target.value as "minutes" | "hours" | "days")
+              }
+              className="h-11 px-3 rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] text-[14px] text-[#1A1A1A] focus:outline-none focus:border-[#1A1A1A]"
+            >
+              <option value="minutes">Minutes</option>
+              <option value="hours">Hours</option>
+              <option value="days">Days</option>
+            </select>
+          </div>
+        ) : null}
+
         <p className="mt-2 text-[12px] text-[#5F6368]">
           Buyer can claim an automatic refund if delivery isn&apos;t confirmed
           within this window.

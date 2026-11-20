@@ -32,24 +32,35 @@ const FILTERS = [
   { key: "REFUNDED", label: "Refunded" },
 ] as const;
 
-export function VendorOrdersView({ orders }: { orders: VendorOrderCard[] }) {
+export function VendorOrdersView({
+  orders,
+  statusCounts,
+  activeFilter,
+  initialSearch,
+}: {
+  orders: VendorOrderCard[];
+  statusCounts: Record<string, number>;
+  activeFilter: string;
+  initialSearch: string;
+}) {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<string>("ALL");
+  const [search, setSearch] = useState(initialSearch);
   const [shippingId, setShippingId] = useState<string | null>(null);
   const [releaseOrder, setReleaseOrder] = useState<VendorOrderCard | null>(null);
   const [shipError, setShipError] = useState<string | null>(null);
 
-  const filtered = orders.filter((o) => {
-    if (filter !== "ALL" && o.status !== filter) return false;
-    if (!search.trim()) return true;
-    const q = search.trim().toLowerCase();
-    return (
-      o.buyerName.toLowerCase().includes(q) ||
-      o.productName.toLowerCase().includes(q) ||
-      o.buyerPhone.toLowerCase().includes(q)
-    );
-  });
+  function updateQuery(nextFilter: string, nextSearch: string) {
+    const params = new URLSearchParams();
+    if (nextFilter !== "ALL") params.set("status", nextFilter);
+    if (nextSearch.trim()) params.set("q", nextSearch.trim());
+    const qs = params.toString();
+    router.replace(qs ? `/dashboard/orders?${qs}` : "/dashboard/orders");
+  }
+
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    updateQuery(activeFilter, search);
+  }
 
   async function handleMarkShipped(orderId: string) {
     setShipError(null);
@@ -74,30 +85,47 @@ export function VendorOrdersView({ orders }: { orders: VendorOrderCard[] }) {
   return (
     <div className="space-y-5">
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search buyer or product…"
-          className="w-full sm:max-w-[280px] h-10 px-4 rounded-full bg-[#FFFFFF] border border-[#E5E5E5] text-[13px] text-[#1A1A1A] placeholder:text-[#5F6368]/70 focus:outline-none focus:border-[#1A1A1A]"
-        />
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <form onSubmit={handleSearchSubmit} className="w-full lg:max-w-[280px]">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSearch(val);
+              if (!val.trim() && initialSearch) {
+                updateQuery(activeFilter, "");
+              }
+            }}
+            placeholder="Search buyer or product…"
+            className="w-full h-10 px-4 rounded-full bg-[#FFFFFF] border border-[#E5E5E5] text-[13px] text-[#1A1A1A] placeholder:text-[#5F6368]/70 focus:outline-none focus:border-[#1A1A1A]"
+          />
+        </form>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 pb-0.5">
           {FILTERS.map((f) => {
-            const active = filter === f.key;
+            const active = activeFilter === f.key;
+            const count = statusCounts[f.key] ?? 0;
+
             return (
               <button
                 key={f.key}
                 type="button"
-                onClick={() => setFilter(f.key)}
-                className={`h-8 px-3 rounded-lg text-[12px] font-medium transition-colors cursor-pointer ${
+                onClick={() => updateQuery(f.key, search)}
+                className={`shrink-0 h-8 px-3 rounded-full text-[12px] font-medium inline-flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer ${
                   active
                     ? "bg-[#1A1A1A] text-[#FFFFFF]"
                     : "bg-[#F8F6F1] text-[#5F6368] hover:text-[#1A1A1A]"
                 }`}
               >
-                {f.label}
+                <span>{f.label}</span>
+                <span
+                  className={`font-mono text-[11px] ${
+                    active ? "text-[#FFFFFF]/75" : "text-[#5F6368]/80"
+                  }`}
+                >
+                  {count}
+                </span>
               </button>
             );
           })}
@@ -113,7 +141,7 @@ export function VendorOrdersView({ orders }: { orders: VendorOrderCard[] }) {
         </div>
       ) : null}
 
-      {filtered.length === 0 ? (
+      {orders.length === 0 ? (
         <section className="border border-[#E5E5E5] rounded-2xl p-10 bg-[#FFFFFF] text-center">
           <p className="text-[15px] font-medium text-[#1A1A1A]">
             No matching orders
@@ -124,10 +152,10 @@ export function VendorOrdersView({ orders }: { orders: VendorOrderCard[] }) {
         </section>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((order) => (
+          {orders.map((order) => (
             <article
               key={order.id}
-              className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-5 flex flex-col justify-between gap-4"
+              className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-5 flex flex-col justify-between gap-4 hover:border-[#D4D4D4] hover:shadow-[0_6px_20px_rgba(26,26,26,0.04)] transition-all duration-200"
             >
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#E5E5E5] shrink-0 bg-[#FAF9F7]">

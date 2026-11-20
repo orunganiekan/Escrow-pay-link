@@ -14,7 +14,9 @@ export function formatDeliveryWindow(windowMinutes: number): string {
     const days = windowMinutes / 1440;
     return days === 1 ? "24h" : `${days} days`;
   }
-  return `${Math.round(windowMinutes / 60)}h`;
+  const hours = Math.floor(windowMinutes / 60);
+  const mins = windowMinutes % 60;
+  return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
 }
 
 export function getAppUrl(): string {

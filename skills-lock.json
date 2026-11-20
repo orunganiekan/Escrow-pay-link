@@ -127,6 +127,13 @@
       "skillPath": "skills/resend-cli/SKILL.md",
       "computedHash": "7bb3b05bb2144a4e73819ec96b7176a8917e2fcbda79cd3abbb11f41b4afaf51"
     },
+    "stageshow": {
+      "source": "benjitaylor/skills",
+      "commit": "299140fafd08df55a9c234e610c3f64af3f45531",
+      "sourceType": "github",
+      "skillPath": "stageshow/SKILL.md",
+      "computedHash": "faaf72b41c206b98da5788093eb07fcdceb80dee90b5dc6dd921048196279474"
+    },
     "two-factor-authentication-best-practices": {
       "source": "better-auth/skills",
       "commit": "20c9e88a5c007461a703f1c213572b073196113e",

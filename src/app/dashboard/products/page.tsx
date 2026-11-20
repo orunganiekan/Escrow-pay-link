@@ -1,21 +1,38 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PaginationControls } from "@/components/PaginationControls";
 import { ProductsList } from "@/components/dashboard/ProductsList";
 import { getAppUrl } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedVendor } from "@/lib/vendor";
 
 export const instant = false;
+const PAGE_SIZE = 12;
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const vendor = await getAuthenticatedVendor();
   if (!vendor) {
     redirect("/login");
   }
 
+  const query = await searchParams;
+  const requestedPage = Math.max(1, Number(query.page || "1") || 1);
+
+  const totalCount = await prisma.product.count({
+    where: { vendorId: vendor.id },
+  });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
+
   const products = await prisma.product.findMany({
     where: { vendorId: vendor.id },
     orderBy: { createdAt: "desc" },
+    skip: (currentPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
     include: {
       _count: { select: { orders: true } },
     },
@@ -52,6 +69,12 @@ export default async function ProductsPage() {
       </div>
 
       <ProductsList initialProducts={initialProducts} appUrl={getAppUrl()} />
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        basePath="/dashboard/products"
+      />
     </div>
   );
 }

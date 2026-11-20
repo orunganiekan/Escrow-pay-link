@@ -32,14 +32,26 @@ export function ChainReceiptDrawer({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full px-4 py-3 flex items-center justify-between font-mono text-[12px] text-[#5F6368] hover:bg-[#F4F3EF] cursor-pointer"
+        className="w-full px-4 py-3 flex items-center justify-between font-mono text-[12px] text-[#5F6368] hover:bg-[#F4F3EF] transition-colors cursor-pointer"
       >
         <span>Receipt on the chain</span>
-        <span>{open ? "⌃" : "⌄"}</span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
       </button>
 
       {open ? (
-        <div className="px-4 pb-4 pt-2 border-t border-[#E5E5E5] space-y-2 font-mono text-[12px]">
+        <div className="px-4 pb-4 pt-2 border-t border-[#E5E5E5] space-y-2 font-mono text-[12px] animate-fade-up">
           <div className="flex items-center justify-between">
             <span className="text-[#5F6368]">Escrow Status</span>
             <span className="text-[#1A1A1A]">{escrowState}</span>

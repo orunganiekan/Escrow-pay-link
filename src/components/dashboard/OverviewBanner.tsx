@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NairaAmount } from "@/components/NairaAmount";
 import { WithdrawModal } from "./WithdrawModal";
 
@@ -18,6 +18,36 @@ export function OverviewBanner({
   disputedCount,
 }: OverviewBannerProps) {
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const targetBalance = Number(availableBalanceNgn) || 0;
+  const [displayedBalance, setDisplayedBalance] = useState(targetBalance);
+
+  useEffect(() => {
+    if (targetBalance <= 0) return;
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    const durationMs = 520;
+    const start = performance.now();
+    let frameId = 0;
+
+    function tick(now: number) {
+      const progress = Math.min(1, (now - start) / durationMs);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayedBalance(Math.round(targetBalance * eased));
+      if (progress < 1) {
+        frameId = requestAnimationFrame(tick);
+      } else {
+        setDisplayedBalance(targetBalance);
+      }
+    }
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [targetBalance]);
 
   const totalResolved = completedCount + disputedCount;
   const completionLabel =
@@ -27,7 +57,7 @@ export function OverviewBanner({
 
   return (
     <>
-      <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-6 sm:p-7 flex items-center justify-between gap-6">
+      <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-6 sm:p-7 flex items-center justify-between gap-6 animate-fade-up">
         <div className="flex-1 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-start gap-6 sm:gap-10">
             <div>
@@ -35,7 +65,7 @@ export function OverviewBanner({
                 AVAILABLE BALANCE
               </p>
               <p className="mt-1.5 text-[28px] sm:text-[32px] font-medium tracking-[-0.02em] text-[#1A1A1A]">
-                <NairaAmount value={availableBalanceNgn} />
+                <NairaAmount value={displayedBalance} />
               </p>
             </div>
 
@@ -58,7 +88,7 @@ export function OverviewBanner({
             <button
               type="button"
               onClick={() => setWithdrawOpen(true)}
-              className="h-10 px-5 rounded-full bg-[#FFFFFF] border border-[#E5E5E5] text-[#1A1A1A] text-[14px] font-medium hover:bg-[#F4F3EF] transition-colors cursor-pointer"
+              className="h-10 px-5 rounded-full bg-[#FFFFFF] border border-[#E5E5E5] text-[#1A1A1A] text-[14px] font-medium hover:bg-[#F4F3EF] active:scale-[0.98] transition-all cursor-pointer"
             >
               Withdraw to Bank
             </button>

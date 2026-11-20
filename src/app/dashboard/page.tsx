@@ -27,10 +27,20 @@ export default async function DashboardOverviewPage() {
     redirect("/onboarding");
   }
 
-  const [availableBalanceNgn, orders, productCount] = await Promise.all([
+  const [
+    availableBalanceNgn,
+    recentOrders,
+    inEscrowAgg,
+    completedCount,
+    disputedCount,
+    productCount,
+  ] = await Promise.all([
     getNgnBalance(vendor.stellarPublic),
     prisma.order.findMany({
-      where: { product: { vendorId: vendor.id } },
+      where: {
+        product: { vendorId: vendor.id },
+        status: { not: "PENDING_PAYMENT" },
+      },
       select: {
         id: true,
         token: true,
@@ -41,34 +51,31 @@ export default async function DashboardOverviewPage() {
         product: { select: { name: true } },
       },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 6,
+    }),
+    prisma.order.aggregate({
+      where: {
+        product: { vendorId: vendor.id },
+        status: { in: ["SECURED", "SHIPPED", "DISPUTED"] },
+      },
+      _sum: { amountNgn: true },
+    }),
+    prisma.order.count({
+      where: { product: { vendorId: vendor.id }, status: "RELEASED" },
+    }),
+    prisma.order.count({
+      where: { product: { vendorId: vendor.id }, status: "DISPUTED" },
     }),
     prisma.product.count({ where: { vendorId: vendor.id } }),
   ]);
 
-  let inEscrowNgn = 0;
-  let completedCount = 0;
-  let disputedCount = 0;
-
-  for (const o of orders) {
-    if (
-      o.status === "SECURED" ||
-      o.status === "SHIPPED" ||
-      o.status === "DISPUTED"
-    ) {
-      inEscrowNgn += Number(o.amountNgn);
-    }
-    if (o.status === "RELEASED") completedCount += 1;
-    if (o.status === "DISPUTED") disputedCount += 1;
-  }
+  const inEscrowNgn = Number(inEscrowAgg._sum.amountNgn ?? 0);
+  const orders = recentOrders;
 
   return (
     <div className="space-y-8">
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-          STORE OVERVIEW
-        </p>
-        <h1 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#1A1A1A]">
+        <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-[#1A1A1A]">
           Overview
         </h1>
       </div>
@@ -84,7 +91,7 @@ export default async function DashboardOverviewPage() {
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E5E5E5]">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-              RECENT ORDERS
+              RECENT ACTIVITY
             </p>
             <h2 className="mt-1 text-[16px] font-medium text-[#1A1A1A]">
               {orders.length === 0

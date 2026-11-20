@@ -17,12 +17,12 @@ export function WithdrawModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A1A]/35 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A1A]/35 px-4 animate-backdrop"
       role="dialog"
       aria-modal="true"
       aria-labelledby="withdraw-modal-title"
     >
-      <div className="w-full max-w-[440px] bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-6 shadow-[0_8px_24px_rgba(26,26,26,0.06)]">
+      <div className="w-full max-w-[440px] bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-6 shadow-[0_8px_24px_rgba(26,26,26,0.06)] animate-modal-pop">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">

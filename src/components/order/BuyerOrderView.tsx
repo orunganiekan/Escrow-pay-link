@@ -215,8 +215,8 @@ export function BuyerOrderView({
   const showPostPayment = order.status !== "PENDING_PAYMENT" && !isProcessing;
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] flex flex-col">
-      <header className="w-full border-b border-[#E5E5E5] bg-[#FFFFFF] sticky top-0 z-20">
+    <div className="min-h-screen bg-[#FFFFFF] md:bg-[#F8F6F1] flex flex-col">
+      <header className="w-full border-b border-[#E5E5E5] bg-[#FFFFFF]/95 backdrop-blur sticky top-0 z-20">
         <div className="max-w-[460px] mx-auto px-4 h-14 flex items-center justify-between gap-3">
           <Link
             href="/"
@@ -227,14 +227,14 @@ export function BuyerOrderView({
           <button
             type="button"
             onClick={handleCopyOrderLink}
-            className="h-8 px-3.5 rounded-full border border-[#E5E5E5] bg-[#FFFFFF] text-[12px] font-medium text-[#1A1A1A] hover:bg-[#F4F3EF] cursor-pointer"
+            className="h-8 px-3.5 rounded-full border border-[#E5E5E5] bg-[#FFFFFF] text-[12px] font-medium text-[#1A1A1A] hover:bg-[#F4F3EF] active:scale-[0.97] transition-all cursor-pointer"
           >
             {copiedLink ? "Copied ✓" : "Copy order link"}
           </button>
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-[460px] mx-auto px-4 py-6 space-y-4">
+      <main className="flex-1 w-full max-w-[460px] mx-auto px-4 py-6 md:py-8 space-y-4">
         {isProcessing ? (
           <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
@@ -378,7 +378,7 @@ export function BuyerOrderView({
 
         {(order.status === "SECURED" || order.status === "SHIPPED") &&
         order.releaseCode ? (
-          <section className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-6 shadow-[0_8px_24px_rgba(26,26,26,0.06)] text-center space-y-3">
+          <section className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-6 shadow-[0_8px_24px_rgba(26,26,26,0.06)] text-center space-y-3 animate-fade-up">
             <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
               YOUR RELEASE CODE
             </p>
@@ -502,13 +502,13 @@ export function BuyerOrderView({
       {/* Dispute Modal */}
       {disputeOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A1A]/35 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A1A]/35 px-4 animate-backdrop"
           role="dialog"
           aria-modal="true"
         >
           <form
             onSubmit={handleSubmitDispute}
-            className="w-full max-w-[420px] bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-6 shadow-[0_8px_24px_rgba(26,26,26,0.06)] space-y-4"
+            className="w-full max-w-[420px] bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-6 shadow-[0_8px_24px_rgba(26,26,26,0.06)] space-y-4 animate-modal-pop"
           >
             <div className="flex items-start justify-between gap-3">
               <div>

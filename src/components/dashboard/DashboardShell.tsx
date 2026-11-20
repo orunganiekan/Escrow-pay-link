@@ -116,7 +116,7 @@ export function DashboardShell({
 
         <Link
           href="/dashboard/products/new"
-          className="mt-5 w-full h-10 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium flex items-center justify-center hover:bg-[#1A1A1A]/90 transition-opacity"
+          className="mt-5 w-full h-10 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium flex items-center justify-center hover:bg-[#1A1A1A]/90 active:scale-[0.98] transition-all"
         >
           + Create Link
         </Link>
@@ -242,14 +242,18 @@ export function DashboardShell({
           <Link
             key={item.href}
             href={item.href}
-            className={`relative flex flex-col items-center justify-center gap-1 py-1.5 rounded-xl text-[11px] font-medium transition-colors ${
+            className={`relative flex flex-col items-center justify-center gap-0.5 py-1 rounded-xl text-[11px] font-medium transition-all active:scale-[0.95] ${
               item.active ? "text-[#1A1A1A]" : "text-[#5F6368]"
             }`}
           >
-            <span className="relative">
+            <span
+              className={`relative px-3 py-1 rounded-full transition-colors ${
+                item.active ? "bg-[#F8F6F1]" : ""
+              }`}
+            >
               {item.icon}
               {item.badge ? (
-                <span className="absolute -top-1.5 -right-2.5 font-mono text-[9px] leading-none px-1.5 py-0.5 rounded-full bg-[#FFB800] text-[#1A1A1A]">
+                <span className="absolute -top-0.5 right-0.5 font-mono text-[9px] leading-none px-1.5 py-0.5 rounded-full bg-[#FFB800] text-[#1A1A1A]">
                   {item.badge}
                 </span>
               ) : null}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { NairaAmount } from "@/components/NairaAmount";
 import { ProductImage } from "@/components/ProductImage";
+import { WhatsAppShareButton } from "@/components/WhatsAppShareButton";
 import {
   buildWhatsAppShareUrl,
   formatDeliveryWindow,
@@ -92,7 +93,7 @@ export function ProductsList({
         return (
           <article
             key={product.id}
-            className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-5 flex flex-col justify-between gap-4"
+            className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-5 flex flex-col justify-between gap-4 hover:border-[#D4D4D4] hover:shadow-[0_6px_20px_rgba(26,26,26,0.04)] transition-all duration-200"
           >
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 rounded-xl overflow-hidden border border-[#E5E5E5] shrink-0">
@@ -156,14 +157,11 @@ export function ProductsList({
               >
                 {isCopied ? "Copied!" : "Copy link"}
               </button>
-              <a
+              <WhatsAppShareButton
                 href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 h-9 px-3 rounded-full border border-[#E5E5E5] bg-[#FFFFFF] text-[#1A1A1A] text-[13px] font-medium inline-flex items-center justify-center hover:bg-[#F4F3EF] whitespace-nowrap"
-              >
-                Share to WhatsApp
-              </a>
+                variant="outline"
+                className="flex-1"
+              />
               <Link
                 href={`/p/${product.slug}`}
                 target="_blank"
