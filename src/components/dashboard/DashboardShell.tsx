@@ -23,7 +23,6 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -117,7 +116,6 @@ export function DashboardShell({
 
         <Link
           href="/dashboard/products/new"
-          onClick={() => setMobileOpen(false)}
           className="mt-5 w-full h-10 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium flex items-center justify-center hover:bg-[#1A1A1A]/90 transition-opacity"
         >
           + Create Link
@@ -128,7 +126,6 @@ export function DashboardShell({
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setMobileOpen(false)}
               className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
                 item.active
                   ? "bg-[#F8F6F1] text-[#1A1A1A]"
@@ -149,10 +146,7 @@ export function DashboardShell({
 
           <button
             type="button"
-            onClick={() => {
-              setMobileOpen(false);
-              setWithdrawOpen(true);
-            }}
+            onClick={() => setWithdrawOpen(true)}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium text-[#5F6368] hover:bg-[#F4F3EF] hover:text-[#1A1A1A] transition-colors cursor-pointer"
           >
             <svg
@@ -190,49 +184,44 @@ export function DashboardShell({
   return (
     <div className="min-h-screen bg-[#FFFFFF] flex flex-col lg:flex-row">
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-30 bg-[#FFFFFF] border-b border-[#E5E5E5] px-4 h-14 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Open menu"
-          className="p-2 -ml-2 rounded-lg text-[#1A1A1A] hover:bg-[#F4F3EF]"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-        <span className="text-[15px] font-semibold text-[#1A1A1A] truncate max-w-[180px]">
-          {storeName}
-        </span>
-        <Link
-          href="/dashboard/products/new"
-          className="h-8 px-3 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[12px] font-medium flex items-center"
-        >
-          + Link
-        </Link>
-      </header>
-
-      {/* Mobile Drawer */}
-      {mobileOpen ? (
-        <div className="lg:hidden fixed inset-0 z-40 flex">
-          <div
-            className="fixed inset-0 bg-[#1A1A1A]/30"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="relative z-50 w-[260px] max-w-[80vw] bg-[#FFFFFF] h-full border-r border-[#E5E5E5]">
-            {sidebarContent}
-          </aside>
+      <header className="lg:hidden sticky top-0 z-30 bg-[#FFFFFF] border-b border-[#E5E5E5] px-4 h-14 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <span className="text-[15px] font-semibold text-[#1A1A1A] truncate block">
+            {storeName}
+          </span>
         </div>
-      ) : null}
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/dashboard/products/new"
+            className="h-8 px-3.5 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[12px] font-medium flex items-center"
+          >
+            + Link
+          </Link>
+          <button
+            type="button"
+            disabled={signingOut}
+            onClick={handleSignOut}
+            title="Sign out"
+            aria-label="Sign out"
+            className="w-8 h-8 rounded-full border border-[#E5E5E5] text-[#5F6368] flex items-center justify-center hover:bg-[#F4F3EF] hover:text-[#1A1A1A] cursor-pointer"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </button>
+        </div>
+      </header>
 
       {/* Desktop Fixed Sidebar */}
       <aside className="hidden lg:block w-[240px] shrink-0 border-r border-[#E5E5E5] bg-[#FFFFFF] sticky top-0 h-screen">
@@ -240,9 +229,56 @@ export function DashboardShell({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 px-4 py-6 sm:px-8 lg:px-10 lg:py-8 max-w-[1200px]">
+      <main className="flex-1 min-w-0 px-4 pt-6 pb-24 sm:px-8 lg:px-10 lg:py-8 max-w-[1200px]">
         {children}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav
+        aria-label="Mobile navigation"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-[#FFFFFF]/95 backdrop-blur border-t border-[#E5E5E5] px-2 h-16 grid grid-cols-4 items-center"
+      >
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`relative flex flex-col items-center justify-center gap-1 py-1.5 rounded-xl text-[11px] font-medium transition-colors ${
+              item.active ? "text-[#1A1A1A]" : "text-[#5F6368]"
+            }`}
+          >
+            <span className="relative">
+              {item.icon}
+              {item.badge ? (
+                <span className="absolute -top-1.5 -right-2.5 font-mono text-[9px] leading-none px-1.5 py-0.5 rounded-full bg-[#FFB800] text-[#1A1A1A]">
+                  {item.badge}
+                </span>
+              ) : null}
+            </span>
+            <span>{item.label}</span>
+          </Link>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setWithdrawOpen(true)}
+          className="flex flex-col items-center justify-center gap-1 py-1.5 rounded-xl text-[11px] font-medium text-[#5F6368] hover:text-[#1A1A1A] cursor-pointer"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="2" y="5" width="20" height="14" rx="2" />
+            <line x1="2" y1="10" x2="22" y2="10" />
+          </svg>
+          <span>Payouts</span>
+        </button>
+      </nav>
 
       <WithdrawModal
         open={withdrawOpen}
