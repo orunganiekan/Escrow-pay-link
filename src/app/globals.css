@@ -20,13 +20,30 @@
   --color-muted: var(--muted-ink);
   --color-hairline: var(--hairline);
   --color-amber: var(--escrow-amber);
-  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  caret-color: #1a1a1a;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+::selection {
+  background: #fff4d6;
+  color: #1a1a1a;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 1.5px solid #1a1a1a;
+  outline-offset: 2px;
 }
 
 .no-scrollbar::-webkit-scrollbar {

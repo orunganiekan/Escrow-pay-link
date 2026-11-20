@@ -75,7 +75,7 @@ export default async function DashboardOverviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-[#1A1A1A]">
+        <h1 className="font-display font-medium text-[26px] tracking-[-0.02em] text-[#1A1A1A]">
           Overview
         </h1>
       </div>
@@ -87,18 +87,13 @@ export default async function DashboardOverviewPage() {
         disputedCount={disputedCount}
       />
 
-      <section className="border border-[#E5E5E5] rounded-2xl p-6 bg-[#FFFFFF]">
+      <section className="border border-[#E5E5E5] rounded-xl p-6 bg-[#FFFFFF]">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E5E5E5]">
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-              RECENT ACTIVITY
-            </p>
-            <h2 className="mt-1 text-[16px] font-medium text-[#1A1A1A]">
-              {orders.length === 0
-                ? "No orders yet"
-                : `${orders.length} recent order${orders.length === 1 ? "" : "s"}`}
-            </h2>
-          </div>
+          <h2 className="font-display font-medium text-[17px] text-[#1A1A1A]">
+            {orders.length === 0
+              ? "Recent orders"
+              : `${orders.length} recent order${orders.length === 1 ? "" : "s"}`}
+          </h2>
           {productCount > 0 ? (
             <Link
               href="/dashboard/products"
@@ -111,13 +106,13 @@ export default async function DashboardOverviewPage() {
 
         {orders.length === 0 ? (
           <div className="py-10 flex flex-col items-center text-center">
-            <p className="text-[14px] text-[#5F6368] max-w-[380px]">
-              Share a pay link on WhatsApp or Instagram to start accepting
-              protected Naira payments.
+            <p className="text-[14px] text-[#5F6368] max-w-[360px]">
+              Your store is ready. Create your first pay link and share it in a
+              WhatsApp or Instagram DM.
             </p>
             <Link
               href="/dashboard/products/new"
-              className="mt-5 h-10 px-5 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium inline-flex items-center hover:bg-[#1A1A1A]/90"
+              className="mt-5 h-10 px-5 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium inline-flex items-center hover:bg-[#2E2E2E] active:scale-[0.98] transition-all"
             >
               + Create your first pay link
             </Link>

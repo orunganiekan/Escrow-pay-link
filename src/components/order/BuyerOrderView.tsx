@@ -234,31 +234,32 @@ export function BuyerOrderView({
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-[460px] mx-auto px-4 py-6 md:py-8 space-y-4">
-        {isProcessing ? (
-          <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-5 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-                {shortOrderCode}
-              </span>
-              <OrderStatusBadge status="PROCESSING_PAYMENT" />
+      <main className="flex-1 w-full max-w-[460px] mx-auto px-4 py-6 md:py-10 space-y-4">
+        {/* Unified Digital Receipt Sheet */}
+        <article className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-xl overflow-hidden animate-fade-up">
+          {isProcessing ? (
+            <div className="bg-[#F8F6F1] p-5 sm:p-6 space-y-3 border-b border-[#E5E5E5]">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
+                  {shortOrderCode}
+                </span>
+                <OrderStatusBadge status="PROCESSING_PAYMENT" />
+              </div>
+              <h1 className="font-display font-medium text-[22px] tracking-[-0.015em] text-[#1A1A1A] leading-snug">
+                Securing <NairaAmount value={order.amountNgn} /> in escrow…
+              </h1>
+              <p className="text-[14px] text-[#5F6368] leading-relaxed">
+                Confirming your payment and locking funds safely for this
+                delivery window.
+              </p>
+              <div className="h-1 w-full rounded-full bg-[#E5E5E5] overflow-hidden">
+                <div className="h-full w-2/3 rounded-full bg-[#FFB800] animate-pulse" />
+              </div>
             </div>
-            <h1 className="text-[22px] font-medium text-[#1A1A1A] leading-snug">
-              Securing <NairaAmount value={order.amountNgn} /> in escrow…
-            </h1>
-            <p className="text-[14px] text-[#5F6368] leading-relaxed">
-              Confirming your payment and locking funds safely for this delivery
-              window.
-            </p>
-            <div className="h-1 w-full rounded-full bg-[#E5E5E5] overflow-hidden">
-              <div className="h-full w-2/3 rounded-full bg-[#FFB800] animate-pulse" />
-            </div>
-          </section>
-        ) : null}
+          ) : null}
 
-        {order.status === "PENDING_PAYMENT" && !isProcessing ? (
-          <>
-            <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-5 space-y-3">
+          {order.status === "PENDING_PAYMENT" && !isProcessing ? (
+            <div className="bg-[#F8F6F1] p-5 sm:p-6 space-y-3 border-b border-[#E5E5E5]">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
                   {shortOrderCode}
@@ -266,7 +267,7 @@ export function BuyerOrderView({
                 <OrderStatusBadge status="PENDING_PAYMENT" />
               </div>
 
-              <h1 className="text-[22px] font-medium text-[#1A1A1A] leading-snug">
+              <h1 className="font-display font-medium text-[22px] tracking-[-0.015em] text-[#1A1A1A] leading-snug">
                 Complete payment to lock{" "}
                 <NairaAmount value={order.amountNgn} /> in escrow.
               </h1>
@@ -274,166 +275,168 @@ export function BuyerOrderView({
                 Pay via Bank Transfer, Card, or USSD. Your money is held safely
                 until you confirm delivery.
               </p>
-            </section>
+            </div>
+          ) : null}
 
-            {order.paystackAuthorizationUrl ? (
-              <div className="space-y-2.5">
-                <a
-                  href={order.paystackAuthorizationUrl}
-                  className="w-full h-12 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium flex items-center justify-center hover:bg-[#1A1A1A]/90"
-                >
-                  Pay {formatNaira(order.amountNgn)} via Paystack →
-                </a>
+          {showPostPayment ? (
+            <div className="bg-[#F8F6F1] p-5 sm:p-6 space-y-3 border-b border-[#E5E5E5]">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
+                  {shortOrderCode}
+                </span>
+                <OrderStatusBadge status={order.status} variant="buyer" />
+              </div>
+
+              {(order.status === "SECURED" || order.status === "SHIPPED") &&
+              !isExpired ? (
+                <h1 className="font-display font-medium text-[22px] tracking-[-0.015em] text-[#1A1A1A] leading-snug">
+                  Your <NairaAmount value={order.amountNgn} /> is safe.
+                </h1>
+              ) : null}
+
+              {(order.status === "SECURED" ||
+                order.status === "SHIPPED" ||
+                order.status === "DISPUTED") &&
+              isExpired ? (
+                <h1 className="font-display font-medium text-[22px] tracking-[-0.015em] text-[#1A1A1A] leading-snug">
+                  Delivery deadline passed — refund available.
+                </h1>
+              ) : null}
+
+              {order.status === "DISPUTED" && !isExpired ? (
+                <>
+                  <h1 className="font-display font-medium text-[22px] tracking-[-0.015em] text-[#1A1A1A] leading-snug">
+                    Payout frozen for review.
+                  </h1>
+                  {order.disputeReason ? (
+                    <p className="text-[13px] text-[#1A1A1A] bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg p-3">
+                      {order.disputeReason}
+                    </p>
+                  ) : null}
+                  <p className="text-[13px] text-[#5F6368]">
+                    An administrator is reviewing this order. Funds cannot be
+                    released to the seller while disputed.
+                  </p>
+                </>
+              ) : null}
+
+              {order.status === "RELEASED" ? (
+                <h1 className="font-display font-medium text-[22px] tracking-[-0.015em] text-[#1A1A1A] leading-snug">
+                  Delivery confirmed —{" "}
+                  <NairaAmount value={order.amountNgn} /> released.
+                </h1>
+              ) : null}
+
+              {order.status === "REFUNDED" ? (
+                <h1 className="font-display font-medium text-[22px] tracking-[-0.015em] text-[#1A1A1A] leading-snug">
+                  <NairaAmount value={order.amountNgn} /> refunded to buyer.
+                </h1>
+              ) : null}
+
+              {deadlineMs !== null &&
+              (order.status === "SECURED" ||
+                order.status === "SHIPPED" ||
+                order.status === "DISPUTED") ? (
+                <div className="pt-1 space-y-1.5">
+                  <div className="h-1 w-full rounded-full bg-[#E5E5E5] overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[#FFB800] transition-all duration-500"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                  <p className="font-mono text-[12px] text-[#5F6368]">
+                    {formatRemainingCountdown(msRemaining)}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {/* 6-Digit Release Code Band */}
+          {(order.status === "SECURED" || order.status === "SHIPPED") &&
+          order.releaseCode ? (
+            <div className="p-6 text-center space-y-2.5 border-b border-[#E5E5E5]">
+              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
+                RELEASE CODE
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <p className="font-mono text-[28px] sm:text-[32px] font-medium tracking-[0.16em] text-[#1A1A1A] whitespace-nowrap select-all">
+                  {formatSpacedCode(order.releaseCode)}
+                </p>
                 <button
                   type="button"
-                  onClick={() => void runVerify()}
-                  className="w-full py-2 text-[13px] font-medium text-[#5F6368] hover:text-[#1A1A1A] cursor-pointer"
+                  onClick={handleCopyCode}
+                  className="h-8 px-3 rounded-full border border-[#E5E5E5] text-[12px] font-medium text-[#5F6368] hover:text-[#1A1A1A] hover:bg-[#F4F3EF] active:scale-[0.97] transition-all cursor-pointer"
                 >
-                  Already paid? Refresh status
+                  {copiedCode ? "Copied" : "Copy"}
                 </button>
               </div>
-            ) : null}
-
-            {verifyMessage ? (
-              <div className="rounded-xl bg-[#FFF4D6] border border-[#FFB800]/50 px-3.5 py-2.5 text-[13px] text-[#8A5A00]">
-                {verifyMessage}
-              </div>
-            ) : null}
-          </>
-        ) : null}
-
-        {showPostPayment ? (
-          <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-5 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-                {shortOrderCode}
-              </span>
-              <OrderStatusBadge status={order.status} variant="buyer" />
-            </div>
-
-            {(order.status === "SECURED" || order.status === "SHIPPED") &&
-            !isExpired ? (
-              <h1 className="text-[22px] font-medium text-[#1A1A1A] leading-snug">
-                Your <NairaAmount value={order.amountNgn} /> is safe.
-              </h1>
-            ) : null}
-
-            {(order.status === "SECURED" ||
-              order.status === "SHIPPED" ||
-              order.status === "DISPUTED") &&
-            isExpired ? (
-              <h1 className="text-[22px] font-medium text-[#1A1A1A] leading-snug">
-                Delivery deadline passed — refund available.
-              </h1>
-            ) : null}
-
-            {order.status === "DISPUTED" && !isExpired ? (
-              <>
-                <h1 className="text-[22px] font-medium text-[#1A1A1A] leading-snug">
-                  Payout frozen for review.
-                </h1>
-                {order.disputeReason ? (
-                  <p className="text-[13px] text-[#1A1A1A] bg-[#FFFFFF] border border-[#E5E5E5] rounded-xl p-3">
-                    {order.disputeReason}
-                  </p>
-                ) : null}
-                <p className="text-[13px] text-[#5F6368]">
-                  An administrator is reviewing this order. Funds cannot be
-                  released to the seller while disputed.
-                </p>
-              </>
-            ) : null}
-
-            {order.status === "RELEASED" ? (
-              <h1 className="text-[22px] font-medium text-[#1A1A1A] leading-snug">
-                Delivery confirmed —{" "}
-                <NairaAmount value={order.amountNgn} /> released.
-              </h1>
-            ) : null}
-
-            {order.status === "REFUNDED" ? (
-              <h1 className="text-[22px] font-medium text-[#1A1A1A] leading-snug">
-                <NairaAmount value={order.amountNgn} /> refunded to buyer.
-              </h1>
-            ) : null}
-
-            {deadlineMs !== null &&
-            (order.status === "SECURED" ||
-              order.status === "SHIPPED" ||
-              order.status === "DISPUTED") ? (
-              <div className="pt-1 space-y-1.5">
-                <div className="h-1 w-full rounded-full bg-[#E5E5E5] overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-[#FFB800] transition-all duration-500"
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-                <p className="font-mono text-[12px] text-[#5F6368]">
-                  {formatRemainingCountdown(msRemaining)}
-                </p>
-              </div>
-            ) : null}
-          </section>
-        ) : null}
-
-        {(order.status === "SECURED" || order.status === "SHIPPED") &&
-        order.releaseCode ? (
-          <section className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-6 shadow-[0_8px_24px_rgba(26,26,26,0.06)] text-center space-y-3 animate-fade-up">
-            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-              YOUR RELEASE CODE
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <p className="font-mono text-[28px] sm:text-[32px] font-medium tracking-[0.16em] text-[#1A1A1A] whitespace-nowrap select-all">
-                {formatSpacedCode(order.releaseCode)}
+              <p className="text-[13px] text-[#5F6368] leading-relaxed max-w-[330px] mx-auto">
+                Share this code{" "}
+                <strong className="font-medium text-[#1A1A1A]">only</strong>{" "}
+                when your item is in your hands. Giving this code releases your
+                money.
               </p>
+            </div>
+          ) : null}
+
+          {/* Paystack Launch Band (PENDING_PAYMENT) */}
+          {order.status === "PENDING_PAYMENT" &&
+          !isProcessing &&
+          order.paystackAuthorizationUrl ? (
+            <div className="p-5 sm:p-6 space-y-2.5 border-b border-[#E5E5E5]">
+              <a
+                href={order.paystackAuthorizationUrl}
+                className="w-full h-12 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium flex items-center justify-center hover:bg-[#2E2E2E] active:scale-[0.985] transition-all"
+              >
+                Pay {formatNaira(order.amountNgn)} via Paystack →
+              </a>
               <button
                 type="button"
-                onClick={handleCopyCode}
-                className="h-8 px-3 rounded-full border border-[#E5E5E5] text-[12px] font-medium text-[#5F6368] hover:text-[#1A1A1A] hover:bg-[#F4F3EF] cursor-pointer"
+                onClick={() => void runVerify()}
+                className="w-full py-1.5 text-[13px] font-medium text-[#5F6368] hover:text-[#1A1A1A] cursor-pointer"
               >
-                {copiedCode ? "Copied" : "Copy"}
+                Already paid? Refresh status
               </button>
+              {verifyMessage ? (
+                <div className="rounded-lg bg-[#FFF4D6] border border-[#FFB800]/50 px-3.5 py-2.5 text-[13px] text-[#8A5A00]">
+                  {verifyMessage}
+                </div>
+              ) : null}
             </div>
-            <p className="text-[13px] text-[#5F6368] leading-relaxed max-w-[340px] mx-auto">
-              Share this code with the seller{" "}
-              <strong className="font-medium text-[#1A1A1A]">only</strong> when
-              your item is in your hands. Giving this code releases your money.
-            </p>
-          </section>
-        ) : null}
+          ) : null}
 
-        <section className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-5 space-y-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-14 h-14 rounded-xl overflow-hidden border border-[#E5E5E5] shrink-0 bg-[#FAF9F7]">
-              <ProductImage
-                src={order.productImageUrl}
-                alt={order.productName}
-                className="w-full h-full object-contain p-1"
-                placeholderLabel=""
-              />
+          {/* Order Breakdown Band */}
+          <div className="p-5 sm:p-6 space-y-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-lg overflow-hidden border border-[#E5E5E5] shrink-0 bg-[#FAF9F7]">
+                <ProductImage
+                  src={order.productImageUrl}
+                  alt={order.productName}
+                  className="w-full h-full object-contain p-1"
+                  placeholderLabel=""
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-medium text-[#1A1A1A] truncate">
+                  {order.productName}
+                </p>
+                <p className="text-[12px] text-[#5F6368]">
+                  {order.vendorName} · {formatDeliveryWindow(order.windowMinutes)}{" "}
+                  window
+                </p>
+              </div>
+              <span className="text-[15px] font-medium text-[#1A1A1A] shrink-0">
+                <NairaAmount value={order.amountNgn} />
+              </span>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[15px] font-medium text-[#1A1A1A] truncate">
-                {order.productName}
-              </p>
-              <p className="text-[13px] text-[#5F6368]">
-                Sold by {order.vendorName} ·{" "}
-                {formatDeliveryWindow(order.windowMinutes)} window
-              </p>
-            </div>
-            <span className="text-[16px] font-medium text-[#1A1A1A] shrink-0">
-              <NairaAmount value={order.amountNgn} />
-            </span>
-          </div>
 
-          <div className="pt-3 border-t border-[#E5E5E5] text-[13px] text-[#5F6368] space-y-1">
-            <p className="font-mono text-[11px] uppercase tracking-[0.08em]">
-              DELIVERING TO
-            </p>
-            <p className="text-[#1A1A1A] font-medium">{order.buyerName}</p>
-            <p>{order.buyerAddress}</p>
+            <div className="pt-3.5 border-t border-[#E5E5E5] text-[13px] text-[#5F6368] space-y-0.5">
+              <p className="text-[#1A1A1A] font-medium">{order.buyerName}</p>
+              <p>{order.buyerAddress}</p>
+            </div>
           </div>
-        </section>
+        </article>
 
         {order.status === "SECURED" ||
         order.status === "SHIPPED" ||

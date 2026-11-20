@@ -112,11 +112,8 @@ export default async function VendorOrdersPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-          ORDERS
-        </p>
-        <h1 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#1A1A1A]">
-          Customer orders
+        <h1 className="font-display font-medium text-[26px] tracking-[-0.02em] text-[#1A1A1A]">
+          Orders
         </h1>
       </div>
 

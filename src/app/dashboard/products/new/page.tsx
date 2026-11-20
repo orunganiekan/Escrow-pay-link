@@ -14,11 +14,8 @@ export default function NewProductPage() {
         >
           ← Back to Pay Links
         </Link>
-        <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-          NEW PAY LINK
-        </p>
-        <h1 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#1A1A1A]">
-          Create a protected product link
+        <h1 className="mt-3 font-display font-medium text-[26px] tracking-[-0.02em] text-[#1A1A1A]">
+          Create a pay link
         </h1>
       </div>
 

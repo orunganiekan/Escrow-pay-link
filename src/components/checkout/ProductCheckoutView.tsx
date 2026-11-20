@@ -102,10 +102,10 @@ export function ProductCheckoutView({
     <div className="min-h-screen bg-[#FFFFFF] md:bg-[#F8F6F1] flex flex-col">
       {/* Minimal Top Bar */}
       <header className="w-full border-b border-[#E5E5E5] bg-[#FFFFFF]/95 backdrop-blur sticky top-0 z-20">
-        <div className="max-w-[460px] lg:max-w-[1040px] mx-auto px-4 lg:px-8 h-14 lg:h-16 flex items-center justify-between">
+        <div className="max-w-[460px] lg:max-w-[1000px] mx-auto px-4 lg:px-8 h-14 lg:h-16 flex items-center justify-between">
           <Link
             href="/"
-            className="text-[15px] lg:text-[16px] font-semibold tracking-tight text-[#1A1A1A]"
+            className="font-display text-[15px] lg:text-[16px] font-medium tracking-[-0.02em] text-[#1A1A1A]"
           >
             EscrowPay
           </Link>
@@ -123,98 +123,88 @@ export function ProductCheckoutView({
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               <path d="m9 12 2 2 4-4" />
             </svg>
-            Escrow Protected
+            Protected
           </span>
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-[460px] lg:max-w-[1040px] mx-auto px-4 lg:px-8 pt-5 md:pt-8 lg:py-10 pb-32 lg:pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-start">
-          {/* Left Column: Product Showcase + Seller Trust */}
-          <div className="lg:col-span-6 lg:sticky lg:top-24 space-y-4">
-            {/* Product Hero Card */}
-            <section className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl overflow-hidden md:shadow-[0_8px_28px_rgba(26,26,26,0.04)] animate-fade-up">
+      <main className="flex-1 w-full max-w-[460px] lg:max-w-[1000px] mx-auto px-4 lg:px-8 pt-5 md:pt-8 lg:py-10 pb-32 lg:pb-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
+          {/* Left Column: Gallery Product Sheet */}
+          <div className="lg:col-span-6 lg:sticky lg:top-24">
+            <section className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-xl overflow-hidden animate-fade-up">
               <div className="aspect-[4/3] w-full overflow-hidden border-b border-[#E5E5E5] bg-[#FAF9F7]">
                 <ProductImage
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-full h-full object-contain p-3 lg:p-5"
+                  className="w-full h-full object-contain p-4 lg:p-6"
                   placeholderLabel="Product photo"
                 />
               </div>
 
               <div className="p-5 lg:p-6">
-                <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-                  {windowEyebrow}
-                </p>
-                <h1 className="mt-1.5 text-[20px] lg:text-[24px] font-medium text-[#1A1A1A] leading-snug">
-                  {product.name}
-                </h1>
-                {product.description ? (
-                  <p className="mt-2 text-[14px] text-[#5F6368] leading-relaxed line-clamp-3 lg:line-clamp-none">
-                    {product.description}
-                  </p>
-                ) : null}
-                <p className="mt-3.5 text-[28px] lg:text-[32px] font-medium tracking-[-0.02em] text-[#1A1A1A]">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h1 className="font-display font-medium text-[20px] lg:text-[24px] tracking-[-0.02em] text-[#1A1A1A] leading-snug">
+                      {product.name}
+                    </h1>
+                    {product.description ? (
+                      <p className="mt-1.5 text-[14px] text-[#5F6368] leading-relaxed line-clamp-3 lg:line-clamp-none">
+                        {product.description}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                <p className="mt-4 text-[28px] lg:text-[32px] font-medium tracking-[-0.02em] text-[#1A1A1A]">
                   <NairaAmount value={product.priceNgn} />
                 </p>
-              </div>
-            </section>
 
-            {/* Earned Seller Trust Strip */}
-            <section className="bg-[#F8F6F1] lg:bg-[#FFFFFF] border border-[#ECE8DF] lg:border-[#E5E5E5] rounded-xl lg:rounded-2xl p-3.5 lg:p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="w-8 h-8 rounded-full bg-[#FFFFFF] lg:bg-[#F8F6F1] border border-[#E5E5E5] flex items-center justify-center text-[12px] font-medium text-[#1A1A1A] shrink-0">
-                    {initials || "S"}
-                  </span>
-                  <span className="text-[14px] font-medium text-[#1A1A1A] truncate">
-                    {product.vendorName}
-                  </span>
-                </div>
-                <span className="font-mono text-[11px] text-[#1A1A1A] shrink-0">
-                  {totalResolved > 0
-                    ? `${completionRate}% completed · ${product.completedOrders} ${
-                        product.completedOrders === 1 ? "order" : "orders"
-                      }`
-                    : "New seller · Protected"}
-                </span>
-              </div>
-              {totalResolved > 0 ? (
-                <div className="mt-3 h-1 w-full rounded-full bg-[#E5E5E5] overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-[#FFB800]"
-                    style={{ width: `${completionRate}%` }}
-                  />
-                </div>
-              ) : null}
-            </section>
+                {/* Quiet Hairline Receipt Breakdown */}
+                <dl className="mt-5 pt-4 border-t border-[#E5E5E5] space-y-2.5 text-[13px]">
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-[#5F6368]">Seller</dt>
+                    <dd className="flex items-center gap-2 text-[#1A1A1A] font-medium min-w-0">
+                      <span className="w-5 h-5 rounded-full bg-[#F8F6F1] border border-[#E5E5E5] inline-flex items-center justify-center text-[10px] shrink-0">
+                        {initials || "S"}
+                      </span>
+                      <span className="truncate">{product.vendorName}</span>
+                    </dd>
+                  </div>
 
-            {/* Desktop-Only Quiet Escrow Guarantees */}
-            <section className="hidden lg:grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] p-3.5">
-                <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#8A5A00]">
-                  HELD SAFELY
-                </p>
-                <p className="mt-1 text-[12px] text-[#5F6368] leading-snug">
-                  Seller isn&apos;t paid until delivery is confirmed.
-                </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-[#5F6368]">Track record</dt>
+                    <dd className="font-mono text-[12px] text-[#1A1A1A]">
+                      {totalResolved > 0
+                        ? `${completionRate}% completed · ${product.completedOrders} ${
+                            product.completedOrders === 1 ? "order" : "orders"
+                          }`
+                        : "New seller"}
+                    </dd>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-[#5F6368]">Delivery window</dt>
+                    <dd className="font-mono text-[12px] text-[#1A1A1A]">
+                      {windowEyebrow}
+                    </dd>
+                  </div>
+                </dl>
+
+                {totalResolved > 0 ? (
+                  <div className="mt-3 h-1 w-full rounded-full bg-[#F2F0EB] overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[#FFB800]"
+                      style={{ width: `${completionRate}%` }}
+                    />
+                  </div>
+                ) : null}
               </div>
-              <div className="rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] p-3.5">
-                <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#1A1A1A]">
-                  6-DIGIT CODE
-                </p>
-                <p className="mt-1 text-[12px] text-[#5F6368] leading-snug">
-                  Share your code only when the item is in your hands.
-                </p>
-              </div>
-              <div className="rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] p-3.5">
-                <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#1E6B3A]">
-                  AUTO REFUND
-                </p>
-                <p className="mt-1 text-[12px] text-[#5F6368] leading-snug">
-                  Claim a full refund if the delivery window expires.
-                </p>
+
+              <div className="px-5 lg:px-6 py-3.5 bg-[#F8F6F1] border-t border-[#E5E5E5] text-[12px] text-[#5F6368] leading-relaxed">
+                Your payment stays locked until you share your 6-digit release
+                code at handoff. If it isn&apos;t delivered in time, claim a
+                full refund.
               </div>
             </section>
           </div>
@@ -223,21 +213,17 @@ export function ProductCheckoutView({
           <form
             id="checkout-form"
             onSubmit={handleSubmit}
-            className="lg:col-span-6 bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-5 lg:p-7 md:shadow-[0_8px_28px_rgba(26,26,26,0.04)] space-y-3.5 animate-fade-up"
+            className="lg:col-span-6 bg-[#FFFFFF] border border-[#E5E5E5] rounded-xl p-5 lg:p-7 space-y-3.5 animate-fade-up"
             style={{ animationDelay: "70ms" }}
           >
-            <div className="pb-2 border-b border-[#E5E5E5] hidden lg:block">
-              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-                ZERO-SIGNUP CHECKOUT
-              </p>
-              <h2 className="mt-1 text-[18px] font-medium text-[#1A1A1A]">
+            <div className="pb-3 border-b border-[#E5E5E5]">
+              <h2 className="font-display font-medium text-[18px] tracking-[-0.01em] text-[#1A1A1A]">
                 Where should we deliver?
               </h2>
+              <p className="mt-0.5 text-[13px] text-[#5F6368]">
+                No account or password needed.
+              </p>
             </div>
-
-            <p className="lg:hidden font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-              DELIVERY DETAILS
-            </p>
 
           <div>
             <label

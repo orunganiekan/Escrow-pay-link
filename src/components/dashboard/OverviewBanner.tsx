@@ -57,7 +57,7 @@ export function OverviewBanner({
 
   return (
     <>
-      <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-6 sm:p-7 flex items-center justify-between gap-6 animate-fade-up">
+      <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-xl p-6 sm:p-7 flex items-center justify-between gap-6 animate-fade-up">
         <div className="flex-1 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-start gap-6 sm:gap-10">
             <div>

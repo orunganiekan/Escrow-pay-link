@@ -52,17 +52,12 @@ export default async function ProductsPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
-            PAY LINKS
-          </p>
-          <h1 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#1A1A1A]">
-            Your product links
-          </h1>
-        </div>
+        <h1 className="font-display font-medium text-[26px] tracking-[-0.02em] text-[#1A1A1A]">
+          Pay Links
+        </h1>
         <Link
           href="/dashboard/products/new"
-          className="hidden lg:inline-flex h-10 px-5 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium items-center hover:bg-[#1A1A1A]/90"
+          className="hidden lg:inline-flex h-10 px-5 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium items-center hover:bg-[#2E2E2E] active:scale-[0.98] transition-all"
         >
           + Create Link
         </Link>
