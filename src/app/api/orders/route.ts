@@ -63,46 +63,59 @@ export async function POST(request: Request) {
     : `${parsed.data.street}, ${parsed.data.city}, ${parsed.data.state}`;
   const callbackUrl = `${getAppUrl()}/o/${token}?verify=1`;
 
-  const [{ publicKey, privyWalletId }, paystack] = await Promise.all([
-    createPrivyStellarAccount(),
-    initializePaystackTransaction({
-      amountNgn: product.priceNgn.toString(),
-      email: buyerEmail,
-      reference: paystackReference,
-      callbackUrl,
-      metadata: {
+  try {
+    const [{ publicKey, privyWalletId }, paystack] = await Promise.all([
+      createPrivyStellarAccount(),
+      initializePaystackTransaction({
+        amountNgn: product.priceNgn.toString(),
+        email: buyerEmail,
+        reference: paystackReference,
+        callbackUrl,
+        metadata: {
+          productId: product.id,
+          slug: product.slug,
+          orderToken: token,
+        },
+      }),
+    ]);
+
+    await prisma.order.create({
+      data: {
+        token,
         productId: product.id,
-        slug: product.slug,
-        orderToken: token,
+        buyerName: parsed.data.buyerName,
+        buyerPhone: parsed.data.buyerPhone,
+        buyerEmail,
+        buyerAddress,
+        amountNgn: product.priceNgn,
+        status: "PENDING_PAYMENT",
+        paystackReference: paystack.reference,
+        paystackAuthorizationUrl: paystack.authorizationUrl,
+        codeHash,
+        codeEnc,
+        buyerStellarPublic: publicKey,
+        buyerPrivyWalletId: privyWalletId,
       },
-    }),
-  ]);
+    });
 
-  await prisma.order.create({
-    data: {
-      token,
-      productId: product.id,
-      buyerName: parsed.data.buyerName,
-      buyerPhone: parsed.data.buyerPhone,
-      buyerEmail,
-      buyerAddress,
-      amountNgn: product.priceNgn,
-      status: "PENDING_PAYMENT",
-      paystackReference: paystack.reference,
-      paystackAuthorizationUrl: paystack.authorizationUrl,
-      codeHash,
-      codeEnc,
-      buyerStellarPublic: publicKey,
-      buyerPrivyWalletId: privyWalletId,
-    },
-  });
-
-  return NextResponse.json(
-    {
-      token,
-      redirectUrl: `/o/${token}`,
-      authorizationUrl: paystack.authorizationUrl,
-    },
-    { status: 201 }
-  );
+    return NextResponse.json(
+      {
+        token,
+        redirectUrl: `/o/${token}`,
+        authorizationUrl: paystack.authorizationUrl,
+      },
+      { status: 201 }
+    );
+  } catch (err) {
+    console.error("[POST /api/orders] Checkout init failed:", err);
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Could not initialize checkout. Please try again.",
+      },
+      { status: 502 }
+    );
+  }
 }

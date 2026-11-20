@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { NairaAmount } from "@/components/NairaAmount";
 import { ProductImage } from "@/components/ProductImage";
+import { ChainReceiptDrawer } from "@/components/order/ChainReceiptDrawer";
+import { OrderStatusBadge } from "@/components/order/OrderStatusBadge";
+import { postJson } from "@/lib/fetch-json";
 import { formatDeliveryWindow, formatNaira } from "@/lib/format";
 
 export interface BuyerOrderData {
@@ -49,11 +52,6 @@ function formatSpacedCode(code: string): string {
   return `${code.slice(0, 3)} ${code.slice(3)}`;
 }
 
-function truncateHash(hash: string): string {
-  if (hash.length <= 16) return hash;
-  return `${hash.slice(0, 8)}…${hash.slice(-8)}`;
-}
-
 export function BuyerOrderView({
   order,
   shouldVerifyOnMount,
@@ -69,8 +67,11 @@ export function BuyerOrderView({
   const [verifyMessage, setVerifyMessage] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [chainOpen, setChainOpen] = useState(false);
-  const [phase5Notice, setPhase5Notice] = useState<string | null>(null);
+
+  const [disputeOpen, setDisputeOpen] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const shortOrderCode = `ORDER #EPL-${order.id.slice(-4).toUpperCase()}`;
 
@@ -78,17 +79,12 @@ export function BuyerOrderView({
     setVerifying(true);
     setVerifyMessage(null);
     try {
-      const res = await fetch(`/api/orders/${order.token}/verify-paystack`, {
-        method: "POST",
-      });
-      const data = (await res.json()) as {
+      const { ok, data } = await postJson<{
         verified?: boolean;
         status?: string;
-        paystackStatus?: string;
-        error?: string;
-      };
+      }>(`/api/orders/${order.token}/verify-paystack`);
 
-      if (!res.ok) {
+      if (!ok) {
         setVerifyMessage(data.error || "Could not verify payment yet.");
         setVerifying(false);
         return;
@@ -119,7 +115,6 @@ export function BuyerOrderView({
     }
   }, [shouldVerifyOnMount, order.status, runVerify]);
 
-  // Poll cleanly while PROCESSING_PAYMENT
   useEffect(() => {
     if (order.status !== "PROCESSING_PAYMENT") return;
     const interval = setInterval(() => {
@@ -128,7 +123,6 @@ export function BuyerOrderView({
     return () => clearInterval(interval);
   }, [order.status, router]);
 
-  // Live countdown tick for SECURED / SHIPPED / DISPUTED
   useEffect(() => {
     if (
       !order.deadlineIso ||
@@ -161,6 +155,49 @@ export function BuyerOrderView({
     setTimeout(() => setCopiedCode(false), 2000);
   }
 
+  async function handleSubmitDispute(e: React.FormEvent) {
+    e.preventDefault();
+    setActionError(null);
+    setActionLoading(true);
+    try {
+      const { ok, data } = await postJson<{ ok?: boolean }>(
+        `/api/orders/${order.token}/dispute`,
+        { reason: disputeReason }
+      );
+      if (!ok) {
+        setActionError(data.error || "Could not submit dispute.");
+        setActionLoading(false);
+        return;
+      }
+      setDisputeOpen(false);
+      setActionLoading(false);
+      router.refresh();
+    } catch {
+      setActionError("Network error submitting dispute.");
+      setActionLoading(false);
+    }
+  }
+
+  async function handleClaimRefund() {
+    setActionError(null);
+    setActionLoading(true);
+    try {
+      const { ok, data } = await postJson<{ ok?: boolean }>(
+        `/api/orders/${order.token}/refund`
+      );
+      if (!ok) {
+        setActionError(data.error || "Could not process refund yet.");
+        setActionLoading(false);
+        return;
+      }
+      setActionLoading(false);
+      router.refresh();
+    } catch {
+      setActionError("Network error claiming refund.");
+      setActionLoading(false);
+    }
+  }
+
   const deadlineMs = order.deadlineIso ? Date.parse(order.deadlineIso) : null;
   const totalWindowMs = order.windowMinutes * 60_000;
   const msRemaining =
@@ -175,12 +212,10 @@ export function BuyerOrderView({
     order.status === "PROCESSING_PAYMENT" ||
     (verifying && order.status === "PENDING_PAYMENT");
 
-  const showPostPayment =
-    order.status !== "PENDING_PAYMENT" && !isProcessing;
+  const showPostPayment = order.status !== "PENDING_PAYMENT" && !isProcessing;
 
   return (
     <div className="min-h-screen bg-[#FFFFFF] flex flex-col">
-      {/* Minimal Header */}
       <header className="w-full border-b border-[#E5E5E5] bg-[#FFFFFF] sticky top-0 z-20">
         <div className="max-w-[460px] mx-auto px-4 h-14 flex items-center justify-between gap-3">
           <Link
@@ -200,24 +235,20 @@ export function BuyerOrderView({
       </header>
 
       <main className="flex-1 w-full max-w-[460px] mx-auto px-4 py-6 space-y-4">
-        {/* ── State 2B: PROCESSING_PAYMENT ── */}
         {isProcessing ? (
           <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
                 {shortOrderCode}
               </span>
-              <span className="inline-flex items-center gap-1.5 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-[#FFF4D6] text-[#8A5A00] border border-[#FFB800]/50">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FFB800] animate-pulse" />
-                Confirming Payment…
-              </span>
+              <OrderStatusBadge status="PROCESSING_PAYMENT" />
             </div>
             <h1 className="text-[22px] font-medium text-[#1A1A1A] leading-snug">
-              Locking <NairaAmount value={order.amountNgn} /> in escrow…
+              Securing <NairaAmount value={order.amountNgn} /> in escrow…
             </h1>
             <p className="text-[14px] text-[#5F6368] leading-relaxed">
-              Confirming your transfer and locking funds in escrow. This usually
-              takes about 5 seconds.
+              Confirming your payment and locking funds safely for this delivery
+              window.
             </p>
             <div className="h-1 w-full rounded-full bg-[#E5E5E5] overflow-hidden">
               <div className="h-full w-2/3 rounded-full bg-[#FFB800] animate-pulse" />
@@ -225,7 +256,6 @@ export function BuyerOrderView({
           </section>
         ) : null}
 
-        {/* ── State 2A: PENDING_PAYMENT ── */}
         {order.status === "PENDING_PAYMENT" && !isProcessing ? (
           <>
             <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-5 space-y-3">
@@ -233,22 +263,16 @@ export function BuyerOrderView({
                 <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
                   {shortOrderCode}
                 </span>
-                <span className="font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-[#F2F0EB] text-[#5F6368] border border-[#E5E5E5]">
-                  Awaiting Payment
-                </span>
+                <OrderStatusBadge status="PENDING_PAYMENT" />
               </div>
-
-              <span className="inline-block font-mono text-[11px] uppercase tracking-[0.06em] px-2.5 py-1 rounded-full bg-[#FFF4D6] text-[#8A5A00] border border-[#FFB800]/50">
-                TEST MODE · Paystack Sandbox
-              </span>
 
               <h1 className="text-[22px] font-medium text-[#1A1A1A] leading-snug">
                 Complete payment to lock{" "}
                 <NairaAmount value={order.amountNgn} /> in escrow.
               </h1>
               <p className="text-[14px] text-[#5F6368] leading-relaxed">
-                Use Paystack Bank Transfer (or Simulate Success in Test Mode) to
-                secure your order.
+                Pay via Bank Transfer, Card, or USSD. Your money is held safely
+                until you confirm delivery.
               </p>
             </section>
 
@@ -278,46 +302,15 @@ export function BuyerOrderView({
           </>
         ) : null}
 
-        {/* ── State 2C / 2D / 2E / 2F: Active, Disputed, or Terminal Status Banner ── */}
         {showPostPayment ? (
           <section className="bg-[#F8F6F1] border border-[#ECE8DF] rounded-2xl p-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#5F6368]">
                 {shortOrderCode}
               </span>
-
-              {order.status === "SECURED" ? (
-                <span className="font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-[#FFF4D6] text-[#8A5A00] border border-[#FFB800]">
-                  Funds Locked in Escrow
-                </span>
-              ) : null}
-
-              {order.status === "SHIPPED" ? (
-                <span className="font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-[#EEF4FF] text-[#1E40AF] border border-[#BFDBFE]">
-                  Shipped — In Transit
-                </span>
-              ) : null}
-
-              {order.status === "DISPUTED" ? (
-                <span className="font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-[#FDECEC] text-[#B42318] border border-[#FECACA]">
-                  Disputed — Frozen
-                </span>
-              ) : null}
-
-              {order.status === "RELEASED" ? (
-                <span className="font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-[#EBF7EE] text-[#1E6B3A] border border-[#BBF7D0]">
-                  Delivered &amp; Released
-                </span>
-              ) : null}
-
-              {order.status === "REFUNDED" ? (
-                <span className="font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-[#F2F0EB] text-[#5F6368] border border-[#E5E5E5]">
-                  Refunded
-                </span>
-              ) : null}
+              <OrderStatusBadge status={order.status} variant="buyer" />
             </div>
 
-            {/* Headlines */}
             {(order.status === "SECURED" || order.status === "SHIPPED") &&
             !isExpired ? (
               <h1 className="text-[22px] font-medium text-[#1A1A1A] leading-snug">
@@ -364,7 +357,6 @@ export function BuyerOrderView({
               </h1>
             ) : null}
 
-            {/* Countdown Bar */}
             {deadlineMs !== null &&
             (order.status === "SECURED" ||
               order.status === "SHIPPED" ||
@@ -384,7 +376,6 @@ export function BuyerOrderView({
           </section>
         ) : null}
 
-        {/* ── 6-Digit Release Code Card (SECURED / SHIPPED) ── */}
         {(order.status === "SECURED" || order.status === "SHIPPED") &&
         order.releaseCode ? (
           <section className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-6 shadow-[0_8px_24px_rgba(26,26,26,0.06)] text-center space-y-3">
@@ -411,7 +402,6 @@ export function BuyerOrderView({
           </section>
         ) : null}
 
-        {/* ── Order Summary Card ── */}
         <section className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-3.5">
             <div className="w-14 h-14 rounded-xl overflow-hidden border border-[#E5E5E5] shrink-0 bg-[#FAF9F7]">
@@ -445,32 +435,27 @@ export function BuyerOrderView({
           </div>
         </section>
 
-        {/* ── Resolution Actions (SECURED / SHIPPED / EXPIRED DISPUTED) ── */}
-        {(order.status === "SECURED" ||
-          order.status === "SHIPPED" ||
-          (order.status === "DISPUTED" && isExpired)) ? (
+        {order.status === "SECURED" ||
+        order.status === "SHIPPED" ||
+        (order.status === "DISPUTED" && isExpired) ? (
           <section className="pt-1 space-y-2.5">
             {isExpired ? (
               <button
                 type="button"
-                onClick={() =>
-                  setPhase5Notice(
-                    "Buyer refund & dispute actions are wired in Phase 5."
-                  )
-                }
-                className="w-full h-12 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium hover:bg-[#1A1A1A]/90 cursor-pointer"
+                disabled={actionLoading}
+                onClick={() => void handleClaimRefund()}
+                className="w-full h-12 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[14px] font-medium hover:bg-[#1A1A1A]/90 disabled:opacity-60 cursor-pointer"
               >
-                Claim full refund
+                {actionLoading ? "Processing refund…" : "Claim full refund"}
               </button>
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() =>
-                    setPhase5Notice(
-                      "Dispute filing is wired in Phase 5."
-                    )
-                  }
+                  onClick={() => {
+                    setActionError(null);
+                    setDisputeOpen(true);
+                  }}
                   className="h-11 rounded-full border border-[#E5E5E5] bg-[#FFFFFF] text-[13px] font-medium text-[#1A1A1A] hover:bg-[#F4F3EF] cursor-pointer"
                 >
                   Report a problem
@@ -493,78 +478,97 @@ export function BuyerOrderView({
               </p>
             ) : null}
 
-            {phase5Notice ? (
-              <div className="rounded-xl bg-[#FFF4D6] border border-[#FFB800]/50 px-3.5 py-2.5 text-[13px] text-[#8A5A00]">
-                {phase5Notice}
+            {actionError ? (
+              <div
+                role="alert"
+                className="rounded-xl bg-[#FDECEC] border border-[#FECACA] px-3.5 py-2.5 text-[13px] text-[#B42318]"
+              >
+                {actionError}
               </div>
             ) : null}
           </section>
         ) : null}
 
-        {/* ── Collapsed Chain Receipt Drawer ── */}
-        {showPostPayment && order.txCreate ? (
-          <section className="border border-[#E5E5E5] rounded-xl bg-[#FFFFFF] overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setChainOpen((prev) => !prev)}
-              className="w-full px-4 py-3 flex items-center justify-between font-mono text-[12px] text-[#5F6368] hover:bg-[#F4F3EF] cursor-pointer"
-            >
-              <span>Receipt on the chain</span>
-              <span>{chainOpen ? "⌃" : "⌄"}</span>
-            </button>
-
-            {chainOpen ? (
-              <div className="px-4 pb-4 pt-2 border-t border-[#E5E5E5] space-y-2 font-mono text-[12px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[#5F6368]">Escrow Status</span>
-                  <span className="text-[#1A1A1A]">
-                    {order.status === "RELEASED" || order.status === "REFUNDED"
-                      ? "CLAIMED"
-                      : "OPEN"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[#5F6368]">Escrow Lock Tx</span>
-                  <a
-                    href={`https://stellar.expert/explorer/testnet/tx/${order.txCreate}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#1A1A1A] underline underline-offset-2"
-                  >
-                    {truncateHash(order.txCreate)} ↗
-                  </a>
-                </div>
-                {order.txRelease ? (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[#5F6368]">Release Tx</span>
-                    <a
-                      href={`https://stellar.expert/explorer/testnet/tx/${order.txRelease}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#1A1A1A] underline underline-offset-2"
-                    >
-                      {truncateHash(order.txRelease)} ↗
-                    </a>
-                  </div>
-                ) : null}
-                {order.txRefund ? (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[#5F6368]">Refund Tx</span>
-                    <a
-                      href={`https://stellar.expert/explorer/testnet/tx/${order.txRefund}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#1A1A1A] underline underline-offset-2"
-                    >
-                      {truncateHash(order.txRefund)} ↗
-                    </a>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </section>
+        {showPostPayment ? (
+          <ChainReceiptDrawer
+            status={order.status}
+            txCreate={order.txCreate}
+            txRelease={order.txRelease}
+            txRefund={order.txRefund}
+          />
         ) : null}
       </main>
+
+      {/* Dispute Modal */}
+      {disputeOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A1A]/35 px-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <form
+            onSubmit={handleSubmitDispute}
+            className="w-full max-w-[420px] bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-6 shadow-[0_8px_24px_rgba(26,26,26,0.06)] space-y-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#B42318]">
+                  REPORT A PROBLEM
+                </p>
+                <h2 className="mt-1 text-[18px] font-semibold text-[#1A1A1A]">
+                  Freeze payout for review
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDisputeOpen(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[#5F6368] hover:bg-[#F4F3EF] cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-[13px] text-[#5F6368] leading-relaxed">
+              Describe what went wrong (e.g. wrong item, damaged parcel, or
+              seller unresponsive). Funds stay frozen while we review.
+            </p>
+
+            <textarea
+              required
+              minLength={5}
+              maxLength={500}
+              rows={3}
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              placeholder="Explain the issue clearly..."
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E5E5] text-[14px] text-[#1A1A1A] placeholder:text-[#5F6368]/60 focus:outline-none focus:border-[#1A1A1A] resize-none"
+            />
+
+            {actionError ? (
+              <div className="rounded-xl bg-[#FDECEC] border border-[#FECACA] px-3 py-2 text-[13px] text-[#B42318]">
+                {actionError}
+              </div>
+            ) : null}
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setDisputeOpen(false)}
+                className="h-10 px-4 rounded-full border border-[#E5E5E5] text-[13px] font-medium text-[#1A1A1A] hover:bg-[#F4F3EF] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={actionLoading}
+                className="h-10 px-5 rounded-full bg-[#1A1A1A] text-[#FFFFFF] text-[13px] font-medium hover:bg-[#1A1A1A]/90 disabled:opacity-60 cursor-pointer"
+              >
+                {actionLoading ? "Freezing…" : "Submit Dispute"}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { NairaAmount } from "@/components/NairaAmount";
 import { ProductImage } from "@/components/ProductImage";
+import { postJson } from "@/lib/fetch-json";
 import { formatDeliveryWindow, formatNaira } from "@/lib/format";
 
 export interface PublicProductData {
@@ -68,10 +69,9 @@ export function ProductCheckoutView({
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { ok, data } = await postJson<{ redirectUrl?: string }>(
+        "/api/orders",
+        {
           productId: product.id,
           buyerName,
           buyerPhone,
@@ -80,15 +80,10 @@ export function ProductCheckoutView({
           city,
           state,
           landmark: landmark || undefined,
-        }),
-      });
+        }
+      );
 
-      const data = (await res.json()) as {
-        redirectUrl?: string;
-        error?: string;
-      };
-
-      if (!res.ok || !data.redirectUrl) {
+      if (!ok || !data.redirectUrl) {
         setError(data.error || "Could not start checkout. Please try again.");
         setSubmitting(false);
         return;
