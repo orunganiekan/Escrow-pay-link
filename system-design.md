@@ -420,9 +420,12 @@ ESCROW_SECRET="S..."
 # Admin Arbitration Access
 ADMIN_EMAIL="admin@example.com"
 
-# Transactional Email (Resend — optional in local dev, required for cross-device buyer OTP in production)
+# Transactional Email — optional in local dev, one provider required for cross-device buyer OTP in production.
+# Gmail SMTP (interim, ~500/day) takes priority over Resend when both are set.
+GMAIL_SMTP_USER="you@gmail.com"
+GMAIL_SMTP_APP_PASSWORD="xxxx xxxx xxxx xxxx"
 RESEND_API_KEY="re_..."
-RESEND_FROM_EMAIL="EscrowPay <no-reply@yourdomain.com>"
+RESEND_FROM_EMAIL="EscrowPay <no-reply@yourdomain.com>"  # must be a Resend-verified domain in production
 ```
 
 ---
@@ -430,7 +433,7 @@ RESEND_FROM_EMAIL="EscrowPay <no-reply@yourdomain.com>"
 ## 9. Security & Reliability Guardrails
 
 1. **No User Private Keys in Postgres:** Vendor and buyer Stellar private keys live strictly inside Privy's TEE; our DB only stores `stellarPublic` and `privyWalletId`.
-2. **Device-Bound Buyer Order Access:** `POST /api/orders` sets an `HttpOnly`, `SameSite=Lax` HMAC-signed cookie (`src/server/orders/buyer-access.ts`). Opening `/o/[token]` from an unrecognized browser hides buyer PII, release codes, and dispute/refund controls behind a 6-digit Email OTP challenge (`request-otp` / `verify-otp`). Both `POST /api/orders/[token]/dispute` and `POST /api/orders/[token]/refund` enforce the cookie server-side.
+2. **Device-Bound Buyer Order Access:** `POST /api/orders` sets an `HttpOnly`, `SameSite=Lax` HMAC-signed cookie (`src/server/orders/buyer-access.ts`). Opening `/o/[token]` from an unrecognized browser hides buyer PII, release codes, and dispute/refund controls behind a 6-digit Email OTP challenge (`request-otp` / `verify-otp`). Both `POST /api/orders/[token]/dispute` and `POST /api/orders/[token]/refund` enforce the cookie server-side. OTP emails go out via `src/server/email.ts` (Gmail SMTP App Password first, then Resend); with Resend, production requires `RESEND_FROM_EMAIL` on a verified custom domain (the `onboarding@resend.dev` sandbox sender is rejected). Production never falls back to console OTPs.
 3. **Verified Paystack Events Only:** `/api/webhooks/paystack` verifies `x-paystack-signature` using `crypto.timingSafeEqual` against the raw request body, and both webhook + callback verify exact `amount` (in kobo) and `currency === "NGN"` before minting/escrowing.
 4. **Race-Safe Idempotency:** `PENDING_PAYMENT -> PROCESSING_PAYMENT` atomic conditional update prevents simultaneous Paystack webhook + redirect callback from double-minting or creating duplicate Claimable Balances.
 5. **Release Code Protection:** Verified with `HMAC-SHA256` + `crypto.timingSafeEqual`, locked after 5 failed vendor attempts (`releaseAttempts >= 5`), while `codeEnc` lets the buyer reliably view their code across mobile browser reloads.
