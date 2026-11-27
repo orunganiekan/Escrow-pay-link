@@ -128,7 +128,7 @@ export function ProductCheckoutView({
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-[460px] lg:max-w-[1000px] mx-auto px-4 lg:px-8 pt-5 md:pt-8 lg:py-10 pb-32 lg:pb-14">
+      <main className="flex-1 w-full max-w-[460px] lg:max-w-[1000px] mx-auto px-4 lg:px-8 pt-5 md:pt-8 lg:py-10 pb-36 lg:pb-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
           {/* Left Column: Gallery Product Sheet */}
           <div className="lg:col-span-6 lg:sticky lg:top-24">
@@ -392,6 +392,7 @@ export function ProductCheckoutView({
             <p className="mt-2 text-center text-[12px] text-[#5F6368]">
               Your money is held safely until you confirm delivery.
             </p>
+            <CheckoutConsent className="mt-1 text-[11px]" />
           </div>
         </form>
         </div>
@@ -413,8 +414,30 @@ export function ProductCheckoutView({
           <p className="mt-1.5 text-center text-[11px] text-[#5F6368]">
             Your money is held safely until you confirm delivery.
           </p>
+          <CheckoutConsent className="mt-0.5 text-[10.5px]" />
         </div>
       </footer>
     </div>
+  );
+}
+
+function CheckoutConsent({ className = "" }: { className?: string }) {
+  const linkClass = "underline underline-offset-2 hover:text-[#1A1A1A]";
+  return (
+    <p className={`text-center text-[#5F6368] leading-snug ${className}`}>
+      By paying you agree to the{" "}
+      <Link href="/legal/terms" target="_blank" rel="noopener" className={linkClass}>
+        Terms
+      </Link>
+      ,{" "}
+      <Link href="/legal/escrow" target="_blank" rel="noopener" className={linkClass}>
+        Escrow Agreement
+      </Link>{" "}
+      and{" "}
+      <Link href="/legal/privacy" target="_blank" rel="noopener" className={linkClass}>
+        Privacy Policy
+      </Link>
+      .
+    </p>
   );
 }

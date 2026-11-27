@@ -82,5 +82,20 @@ Before deploying to Vercel:
 
 - **Next.js 16 `cacheComponents: true`:** Any Server Component page or layout calling `auth.getSession()` (`cookies()`) or dynamic `params` without a `<Suspense>` boundary needs `export const instant = false` so `next build` doesn't fail prerender validation.
 - **Prisma 7 + Neon:** `prisma.config.ts` must point migrations to unpooled `DATABASE_URL_UNPOOLED`, while runtime uses pooled `DATABASE_URL` via `@prisma/adapter-pg`. Normalize `sslmode=require` → `sslmode=verify-full` in `src/lib/prisma.ts` to prevent `pg-connection-string` deprecation warnings in Next.js Dev Overlay.
-- **Observability & Automated Testing:** Add structured error tracking (e.g., Sentry), a `/api/health` endpoint, and automated API/E2E integration tests beyond `scripts/smoke-escrow.ts`.
-- **Legal & Compliance:** Add Terms of Service, Privacy Policy, and Escrow Agreement pages, ensure NDPR compliance for buyer PII, and operate real-money escrow under a licensed Nigerian PSP/trustee structure.
+- **Observability (done, no Sentry):** Structured JSON logs (`src/server/log.ts`) and `onRequestError` in `src/instrumentation.ts` cover handled and uncaught server errors. To get alerts: add a Vercel log drain or alert on `"level":"error"`, and point an uptime monitor (Better Stack, UptimeRobot, Vercel Checks) at `GET /api/health`, alerting on non-200. A hosted error tracker can be added later behind `log.error` without touching call sites.
+- **Automated Testing (done):** Vitest API/unit suite + Playwright E2E + GitHub Actions CI (see `system-design.md` §9). Not covered offline: real Stellar/Privy transactions (keep using `scripts/smoke-escrow.ts`) and Paystack's hosted page beyond the redirect.
+- **Legal pages (drafted, pending counsel):** `/legal/terms`, `/legal/escrow`, `/legal/privacy` are live and linked from the footer, checkout and seller signup. Before real money: fill `entityName`, `rcNumber`, `registeredAddress`, `privacyEmail` and `fundsCustodian` in `src/lib/legal.ts`, have Nigerian counsel review the texts, then set `pendingLegalReview: false` to remove the draft banner.
+
+## 10. Nigerian Fintech & Escrow Compliance Structure (open — business/legal decision)
+
+Not solvable in code. Items to settle with Nigerian fintech counsel before taking real payments:
+
+- **Who holds customer funds.** EscrowPay must not hold buyer money in its own account. Options, in rough order of time-to-launch:
+  1. **Licensed PSP partner** whose product supports held/split settlement (collect into a PSP-managed balance; release or refund on our API instruction). Fastest, as the regulatory burden stays with the partner.
+  2. **Trustee structure:** an SEC-registered trustee company holds funds in a designated trust account at a commercial bank under a trust deed that mirrors `/legal/escrow`.
+  3. **Own CBN licence** (e.g. Payment Solution Service Provider). Slowest and most capital-intensive; only worth it at scale.
+- **Corporate:** CAC incorporation; RC number on all legal pages; tax registration.
+- **Data protection (NDPA 2023 / NDPC GAID):** appoint a DPO, register with the NDPC if we qualify as a data controller of major importance, keep a record of processing, sign DPAs with processors (Paystack, Neon, Vercel, Privy, email provider), document cross-border transfer safeguards, file annual compliance audit returns, and keep the 72-hour breach notification runbook.
+- **AML/CFT:** confirm whether SCUML registration applies, define KYC tiers for sellers (BVN/NIN before payouts), transaction monitoring thresholds, and 5-year record retention (matches the Privacy Policy).
+- **Consumer protection:** confirm the dispute process meets FCCPC expectations.
+- **Settlement ledger disclosure:** the Privacy Policy and Escrow Agreement disclose the public settlement ledger in neutral terms; confirm counsel is comfortable with this wording under the zero-crypto-UX principle.

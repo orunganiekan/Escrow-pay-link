@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedVendor } from "@/lib/vendor";
 import { verifyReleaseCode } from "@/server/crypto";
 import { escrowService } from "@/server/stellar/escrow";
+import { log } from "@/server/log";
 
 export const maxDuration = 30;
 
@@ -128,7 +129,7 @@ export async function POST(
 
     return NextResponse.json({ ok: true, status: "RELEASED", txRelease: txHash });
   } catch (err) {
-    console.error("[POST /api/vendor/orders/[id]/release] Failed:", err);
+    log.error("order.release.failed", { orderId: order.id }, err);
     return NextResponse.json(
       { error: "Could not release funds right now. Please try again." },
       { status: 502 }

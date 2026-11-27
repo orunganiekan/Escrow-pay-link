@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hasBuyerOrderAccess } from "@/server/orders/buyer-access";
 import { escrowService } from "@/server/stellar/escrow";
+import { log } from "@/server/log";
 
 export const maxDuration = 30;
 
@@ -78,7 +79,7 @@ export async function POST(
 
     return NextResponse.json({ ok: true, status: "REFUNDED", txRefund: txHash });
   } catch (err) {
-    console.error("[POST /api/orders/[token]/refund] Failed:", err);
+    log.error("order.refund.failed", { orderId: order.id }, err);
     return NextResponse.json(
       { error: "Could not complete refund yet. Please try again in a few seconds." },
       { status: 502 }
