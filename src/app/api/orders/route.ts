@@ -7,6 +7,7 @@ import { encrypt, generateReleaseCode, hashReleaseCode } from "@/server/crypto";
 import { issueBuyerAccessCookie } from "@/server/orders/buyer-access";
 import { initializePaystackTransaction } from "@/server/paystack";
 import { createPrivyStellarAccount } from "@/server/stellar/accounts";
+import { log } from "@/server/log";
 
 export const maxDuration = 30;
 
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
     issueBuyerAccessCookie(response, createdOrder);
     return response;
   } catch (err) {
-    console.error("[POST /api/orders] Checkout init failed:", err);
+    log.error("order.checkout.init_failed", { productId: product.id }, err);
     return NextResponse.json(
       {
         error:

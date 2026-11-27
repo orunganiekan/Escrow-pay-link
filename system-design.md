@@ -368,9 +368,11 @@ stateDiagram-v2
 | `/dashboard/products` & `/new` | Vendor | Paginated pay links (12/page), Copy link, Share to WhatsApp, new product form (image URL + presets & custom window) |
 | `/dashboard/orders` & `/[id]` | Vendor | Server-paginated order queue (18/page, search `?q=`, status `?status=`), buyer shipping details, Mark shipped, segmented 6-digit release code entry, chain receipt |
 | `/admin` | Admin | Paginated disputed orders queue (20/page) with equal-weight Refund Buyer / Release to Seller controls + deadline status |
+| `/legal/terms`, `/legal/escrow`, `/legal/privacy` | Public | Static Terms of Service, Escrow Agreement and NDPA-aligned Privacy Policy (`src/lib/legal.ts` holds entity details + draft banner flag); linked from the landing footer, checkout CTA and seller signup |
 | `not-found.tsx`, `error.tsx`, `loading.tsx` | All | Warm Editorial 404, error recovery boundary, and route-level loading skeletons (`/dashboard`, `/p/[slug]`, `/o/[token]`) |
 
 ### API Endpoints
+- `GET /api/health` *(public uptime probe: `SELECT 1` on Postgres + Horizon reachability, 3s timeout each; 200 when both pass, 503 otherwise; no business data)*
 - `GET/POST /api/auth/[...path]` *(Neon Auth proxy)*
 - `POST /api/vendor/onboarding`
 - `GET/POST /api/products` *(supports `?page=` & `?limit=`)*
@@ -409,6 +411,9 @@ PRIVY_APP_SECRET="<privy-app-secret>"
 PAYSTACK_SECRET_KEY="sk_test_..."
 NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY="pk_test_..."
 
+# Structured server logs: debug | info | warn | error (default: info in production, debug otherwise)
+LOG_LEVEL="info"
+
 # Release Code Encryption & HMAC (AES-256-GCM, 64 hex chars / 32 bytes)
 ENCRYPTION_KEY="<64-char hex (32 bytes)>"
 
@@ -435,3 +440,5 @@ RESEND_FROM_EMAIL="EscrowPay <no-reply@yourdomain.com>"
 4. **Race-Safe Idempotency:** `PENDING_PAYMENT -> PROCESSING_PAYMENT` atomic conditional update prevents simultaneous Paystack webhook + redirect callback from double-minting or creating duplicate Claimable Balances.
 5. **Release Code Protection:** Verified with `HMAC-SHA256` + `crypto.timingSafeEqual`, locked after 5 failed vendor attempts (`releaseAttempts >= 5`), while `codeEnc` lets the buyer reliably view their code across mobile browser reloads.
 6. **Clean Production Path:** Swapping from test to live requires switching Paystack keys, adding a licensed NGN/cNGN Stellar anchor or pre-funded float for real on-ramp/off-ramp (see [`production-notes.md`](./production-notes.md)), and optionally replacing `ClaimableBalanceEscrow` with a Soroban contract behind `EscrowService`.
+7. **Observability:** `src/server/log.ts` emits one JSON line per event and redacts PII/secret-looking keys (email, phone, code, token, address…). `src/instrumentation.ts` `onRequestError` logs every uncaught server error the same way with `/o/[token]` capability tokens stripped. Alerting is done on Vercel logs (or a log drain) filtering `"level":"error"`, plus an uptime monitor on `GET /api/health`. No third-party error tracker.
+8. **Automated Tests:** `npm test` (Vitest, `tests/`) exercises route handlers against an in-memory Prisma fake with mocked escrow/Privy/Paystack/Neon Auth: webhook signature + amount checks and idempotency, webhook/callback race, escrow failure rollback, release-code attempts and 5-attempt lock, disputes, post-deadline refunds, checkout, the buyer OTP flow and `/api/health`. `npm run test:e2e` (Playwright, `e2e/`) boots `next start` offline for public pages and health; with `E2E_BASE_URL` + `E2E_PRODUCT_SLUG` it also runs a real Paystack test-mode checkout. `.github/workflows/ci.yml` runs lint, types, unit, build and E2E on every PR.

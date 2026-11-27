@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EscrowFlowDemo } from "@/components/landing/EscrowFlowDemo";
+import { LEGAL_LINKS } from "@/lib/legal";
 
 export default function HomePage() {
   return (
@@ -244,6 +245,15 @@ export default function HomePage() {
             >
               Dashboard
             </Link>
+            {LEGAL_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="hover:text-[#1A1A1A] transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
             <span className="font-mono text-[11px] text-[#5F6368]/80">
               © 2026 EscrowPay
             </span>

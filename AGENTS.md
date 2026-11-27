@@ -17,6 +17,7 @@ Naira (₦) social-commerce payment links backed by invisible Stellar escrow. Se
 ## Commands
 
 - Dev / build / lint / types: `npm run dev`, `npm run build`, `npm run lint`, `npx tsc --noEmit`
+- Tests: `npm test` (Vitest, offline API/unit), `npm run test:e2e` (Playwright; run `npm run build` first)
 - Prisma: `npx prisma migrate dev`, `npx prisma generate`
 - Stellar scripts: `npx tsx scripts/bootstrap.ts`, `npx tsx scripts/smoke-escrow.ts`
 

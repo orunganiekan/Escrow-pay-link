@@ -198,6 +198,23 @@ export function EmailPasswordAuthForm({ mode }: EmailAuthFormProps) {
               ? "Continue →"
               : "Sign in →"}
         </button>
+        {isSignup ? (
+          <p className="text-center text-[12px] leading-snug text-[#5F6368]">
+            By creating an account you agree to the{" "}
+            <Link href="/legal/terms" className="underline underline-offset-2 hover:text-[#1A1A1A]">
+              Terms
+            </Link>
+            ,{" "}
+            <Link href="/legal/escrow" className="underline underline-offset-2 hover:text-[#1A1A1A]">
+              Escrow Agreement
+            </Link>{" "}
+            and{" "}
+            <Link href="/legal/privacy" className="underline underline-offset-2 hover:text-[#1A1A1A]">
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        ) : null}
       </form>
     </AuthCardShell>
   );

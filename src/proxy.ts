@@ -8,6 +8,7 @@ export default auth.middleware({
     "/signup",
     "/p",
     "/o",
+    "/legal",
     "/api/health",
     "/api/orders",
     "/api/webhooks",

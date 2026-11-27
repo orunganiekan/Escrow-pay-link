@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getAdminSession } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { escrowService } from "@/server/stellar/escrow";
+import { log } from "@/server/log";
 
 export const maxDuration = 30;
 
@@ -116,7 +117,7 @@ export async function POST(
       txRefund: txHash,
     });
   } catch (err) {
-    console.error("[POST /api/admin/orders/[id]/resolve] Failed:", err);
+    log.error("admin.resolve.failed", { orderId: id }, err);
     return NextResponse.json(
       { error: "Could not resolve dispute on-chain. Please try again." },
       { status: 502 }
