@@ -1,3 +1,5 @@
+import nodemailer, { type Transporter } from "nodemailer";
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -8,13 +10,113 @@ function escapeHtml(text: string): string {
 }
 
 export type SendOtpResult =
-  | { ok: true; mode: "resend" | "dev-console" }
+  | { ok: true; mode: "gmail-smtp" | "resend" | "dev-console" }
   | { ok: false; error: string };
+
+const NOT_CONFIGURED_ERROR =
+  "Email verification is not configured yet. Please open this link on the browser you used at checkout.";
+const SEND_FAILED_ERROR = "Could not send verification email right now. Please try again.";
+
+type OutgoingEmail = { to: string; subject: string; html: string; text: string };
+type Transport =
+  | { kind: "gmail-smtp"; user: string; pass: string }
+  | { kind: "resend"; apiKey: string; from: string }
+  | { kind: "dev-console" }
+  | { kind: "none" };
+
+/**
+ * Picks the outgoing email provider:
+ *   1. Gmail SMTP (GMAIL_SMTP_USER + GMAIL_SMTP_APP_PASSWORD)
+ *   2. Resend (RESEND_API_KEY, with RESEND_FROM_EMAIL on a verified domain in production)
+ *   3. Server-console output — local development only, never in production.
+ */
+function resolveTransport(): Transport {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  const gmailUser = process.env.GMAIL_SMTP_USER?.trim();
+  const gmailPass = process.env.GMAIL_SMTP_APP_PASSWORD?.replace(/\s+/g, "");
+  if (gmailUser && gmailPass) {
+    return { kind: "gmail-smtp", user: gmailUser, pass: gmailPass };
+  }
+
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (apiKey) {
+    const configuredFrom = process.env.RESEND_FROM_EMAIL?.trim();
+    // Resend's shared onboarding@resend.dev sender only delivers to the Resend
+    // account owner, so in production it would silently lock real buyers out.
+    if (isProduction && (!configuredFrom || /@resend\.dev>?$/i.test(configuredFrom))) {
+      console.error(
+        "[email] RESEND_FROM_EMAIL must use a verified custom domain in production."
+      );
+      return { kind: "none" };
+    }
+    return {
+      kind: "resend",
+      apiKey,
+      from: configuredFrom || "EscrowPay <onboarding@resend.dev>",
+    };
+  }
+
+  return isProduction ? { kind: "none" } : { kind: "dev-console" };
+}
+
+let gmailTransporter: Transporter | null = null;
+
+async function sendViaGmail(
+  transport: Extract<Transport, { kind: "gmail-smtp" }>,
+  email: OutgoingEmail
+): Promise<boolean> {
+  gmailTransporter ??= nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user: transport.user, pass: transport.pass },
+  });
+  try {
+    await gmailTransporter.sendMail({
+      from: `EscrowPay <${transport.user}>`,
+      to: email.to,
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+    });
+    return true;
+  } catch (err) {
+    console.error("[email] Gmail SMTP send failed:", err);
+    return false;
+  }
+}
+
+async function sendViaResend(
+  transport: Extract<Transport, { kind: "resend" }>,
+  email: OutgoingEmail,
+  idempotencyKey: string
+): Promise<boolean> {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${transport.apiKey}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({
+      from: transport.from,
+      to: [email.to],
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+    }),
+  });
+  if (!response.ok) {
+    const errText = await response.text().catch(() => "");
+    console.error("[email] Resend send failed:", response.status, errText);
+    return false;
+  }
+  return true;
+}
 
 /**
  * Sends a 6-digit device verification OTP to the buyer's checkout email.
- * Uses Resend when RESEND_API_KEY is configured; falls back to server-console
- * output in local development so zero-SMTP environments remain testable.
  */
 export async function sendBuyerOtpEmail(params: {
   to: string;
@@ -23,24 +125,18 @@ export async function sendBuyerOtpEmail(params: {
   otp: string;
   challengeId: string;
 }): Promise<SendOtpResult> {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const transport = resolveTransport();
 
-  if (!apiKey) {
-    if (process.env.NODE_ENV !== "production") {
-      console.info(
-        `[DEV BUYER OTP] ${params.orderCode} (${params.to}) -> verification code: ${params.otp}`
-      );
-      return { ok: true, mode: "dev-console" };
-    }
-    return {
-      ok: false,
-      error:
-        "Email verification is not configured yet. Please open this link on the browser you used at checkout.",
-    };
+  if (transport.kind === "none") {
+    return { ok: false, error: NOT_CONFIGURED_ERROR };
   }
 
-  const from =
-    process.env.RESEND_FROM_EMAIL?.trim() || "EscrowPay <onboarding@resend.dev>";
+  if (transport.kind === "dev-console") {
+    console.info(
+      `[DEV BUYER OTP] ${params.orderCode} (${params.to}) -> verification code: ${params.otp}`
+    );
+    return { ok: true, mode: "dev-console" };
+  }
 
   const safeOrderCode = escapeHtml(params.orderCode);
   const safeProduct = escapeHtml(params.productName);
@@ -69,30 +165,17 @@ export async function sendBuyerOtpEmail(params: {
     "This code expires in 10 minutes. Never share it with anyone.",
   ].join("\n");
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "Idempotency-Key": `buyer-otp/${params.challengeId}`,
-    },
-    body: JSON.stringify({
-      from,
-      to: [params.to],
-      subject: `${params.otp} is your EscrowPay verification code (${params.orderCode})`,
-      html,
-      text,
-    }),
-  });
+  const email: OutgoingEmail = {
+    to: params.to,
+    subject: `${params.otp} is your EscrowPay verification code (${params.orderCode})`,
+    html,
+    text,
+  };
 
-  if (!response.ok) {
-    const errText = await response.text().catch(() => "");
-    console.error("[sendBuyerOtpEmail] Resend failed:", response.status, errText);
-    return {
-      ok: false,
-      error: "Could not send verification email right now. Please try again.",
-    };
-  }
+  const sent =
+    transport.kind === "gmail-smtp"
+      ? await sendViaGmail(transport, email)
+      : await sendViaResend(transport, email, `buyer-otp/${params.challengeId}`);
 
-  return { ok: true, mode: "resend" };
+  return sent ? { ok: true, mode: transport.kind } : { ok: false, error: SEND_FAILED_ERROR };
 }
